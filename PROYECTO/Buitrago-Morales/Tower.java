@@ -78,6 +78,9 @@ public class Tower {
         for (int i = items.size() - 1; i >= 0; i--) {
             if (items.get(i) instanceof Cup) {
                 Cup cup = (Cup) items.get(i);
+                if (cup.hasLid()) {
+                    items.remove(cup.getLid());
+                }
                 items.remove(cup);
                 if (isVisible) {
                     redraw();
@@ -98,6 +101,9 @@ public class Tower {
             if (items.get(j) instanceof Cup) {
                 Cup cup = (Cup) items.get(j);
                 if (cup.getNumber() == i) {
+                    if (cup.hasLid()) {
+                        items.remove(cup.getLid());
+                    }
                     items.remove(cup);
                     if (isVisible) {
                         redraw();
@@ -110,51 +116,131 @@ public class Tower {
     }
     
     /**
-     * Orders tower elements from largest to smallest.
-     * Cups by height, lids by number (descending).
-     * Only includes elements that fit within maximum height.
-     * Paired cup-lid move together.
+     * Agrega una tapa a la torre y solo una tapa por número puede existir.
+     * @param i El numero de la tapa a agregar.
+     */
+    public void pushLid(int i) {
+        if (lidExists(i)) {
+            showError("Lid #" + i + " already exists in the tower");
+            return;
+        }
+        
+        Lid lid = new Lid(i);
+        
+        if (calculateHeight() + lid.getHeight() <= maxHeight) {
+            Cup matchingCup = findCup(i);
+            if (matchingCup != null && !matchingCup.hasLid()) {
+                matchingCup.setLid(lid);
+                lid.setAssociatedCup(matchingCup);
+            }
+            
+            items.add(lid);
+            if (isVisible) {
+                redraw();
+            }
+        } else {
+            showError("Cannot add lid #" + i + 
+                    ": would exceed maximum height of " + maxHeight + " cm");
+        }
+    }
+    
+    /**
+     * Remueve la tapa más alta de la torre.
+     */
+    public void popLid() {
+        for (int i = items.size() - 1; i >= 0; i--) {
+            if (items.get(i) instanceof Lid) {
+                Lid lid = (Lid) items.get(i);
+                if (lid.isOnCup()) {
+                    lid.getAssociatedCup().setLid(null);
+                }
+                items.remove(lid);
+                if (isVisible) {
+                    redraw();
+                }
+                return;
+            }
+        }
+        showError("No lids to remove");
+    }
+    
+    /**
+     * Remueve una tapa específica por su número.
+     * 
+     * @param i El numero de la tapa a remover.
+     */
+    public void removeLid(int i) {
+        for (int j = 0; j < items.size(); j++) {
+            if (items.get(j) instanceof Lid) {
+                Lid lid = (Lid) items.get(j);
+                if (lid.getNumber() == i) {
+                    if (lid.isOnCup()) {
+                        lid.getAssociatedCup().setLid(null);
+                    }
+                    items.remove(lid);
+                    if (isVisible) {
+                        redraw();
+                    }
+                    return;
+                }
+            }
+        }
+        showError("Lid #" + i + " not found in tower");
+    }
+    
+    /**
+     * Ordena los elementos de la torre de mayor a menor.
      */
     public void orderTower() {
         ArrayList<Cup> cups = new ArrayList<>();
+        ArrayList<Lid> lids = new ArrayList<>();
+        for (Object item : items) {
+            if (item instanceof Cup) {
+                cups.add((Cup) item);
+            } else if (item instanceof Lid) {
+                Lid lid = (Lid) item;
+                if (!lid.isOnCup()) {
+                    lids.add(lid);
+                }
+            }
+        }
         
-        
-        // Altura de las tazas (descendente)
+        // Ordenar tazas por altura descendente.
         Collections.sort(cups, new Comparator<Cup>() {
             public int compare(Cup c1, Cup c2) {
                 return c2.getHeight() - c1.getHeight();
             }
         });
         
+        // Ordena tapas por numero descendente.
+        Collections.sort(lids, new Comparator<Lid>() {
+            public int compare(Lid l1, Lid l2) {
+                return l2.getNumber() - l1.getNumber();
+            }
+        });
         
-        // Construir de nuevo la lista de elementos ordenados
+        // Reconstruir la torre con tazas ordenadas y luego tapas sin pareja.
         items.clear();
         int currentHeight = 0;
-        
-        // Add cups (with their lids if paired)
         for (Cup cup : cups) {
             int totalHeight = cup.getHeight();
+            if (cup.hasLid()) {
+                totalHeight += cup.getLid().getHeight();
+            }
             
             if (currentHeight + totalHeight <= maxHeight) {
                 items.add(cup);
+                if (cup.hasLid()) {
+                    items.add(cup.getLid());
                 }
                 currentHeight += totalHeight;
             }
         }
         
-        
-    }
-    
-    /**
-     * Revertir el orden de los elementos en la torre.
-     */
-    public void reverseTower() {
-        Collections.reverse(items);
-        
-        while (calculateHeight() > maxHeight && !items.isEmpty()) {
-            Object removed = items.remove(items.size() - 1);
-            if (removed instanceof Cup) {
-                Cup cup = (Cup) removed;
+        for (Lid lid : lids) {
+            if (currentHeight + lid.getHeight() <= maxHeight) {
+                items.add(lid);
+                currentHeight += lid.getHeight();
             }
         }
         
@@ -164,17 +250,84 @@ public class Tower {
     }
     
     /**
-     * Gets the current height of stacked elements in cm.
+     * Invierte el orden de los elementos en la torre.
+     */
+    public void reverseTower() {
+        Collections.reverse(items);
+        
+        while (calculateHeight() > maxHeight && !items.isEmpty()) {
+            Object removed = items.remove(items.size() - 1);
+            if (removed instanceof Cup) {
+                Cup cup = (Cup) removed;
+                if (cup.hasLid()) {
+                    items.remove(cup.getLid());
+                }
+            }
+        }
+        
+        if (isVisible) {
+            redraw();
+        }
+    }
+    
+    /**.
      * 
-     * @return The total height in cm
+     * @return La altura total de la torre en cm.
      */
     public int height() {
         return calculateHeight();
     }
     
     /**
-     * Makes the tower visible.
+     * Obtiene el número de tazas en la torre. 
+     * @return Lista de números de tazas en la torre.
+     */ 
+
+    public int[] lidedCups() {
+        ArrayList<Integer> covered = new ArrayList<>();
+        
+        for (Object item : items) {
+            if (item instanceof Cup) {
+                Cup cup = (Cup) item;
+                if (cup.hasLid()) {
+                    covered.add(cup.getNumber());
+                }
+            }
+        }
+        
+        // Ordenar los números de las tazas cubiertas de menor a mayor
+        Collections.sort(covered);
+        
+        // Convierte la lista de Integer a un array de int.
+        int[] result = new int[covered.size()];
+        for (int i = 0; i < covered.size(); i++) {
+            result[i] = covered.get(i);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Obtiene la información de los elementos apilados.
+     * @return Una matriz 2D con el tipo ya sea cup o lid y su numero
      */
+    public String[][] stackingItems() {
+        String[][] result = new String[items.size()][2];
+        
+        for (int i = 0; i < items.size(); i++) {
+            Object item = items.get(i);
+            if (item instanceof Cup) {
+                result[i][0] = "cup";
+                result[i][1] = String.valueOf(((Cup) item).getNumber());
+            } else if (item instanceof Lid) {
+                result[i][0] = "lid";
+                result[i][1] = String.valueOf(((Lid) item).getNumber());
+            }
+        }
+        
+        return result;
+    }
+    
     public void makeVisible() {
         isVisible = true;
         base.moveHorizontal(BASE_X - 70);
@@ -184,9 +337,6 @@ public class Tower {
         redraw();
     }
     
-    /**
-     * Makes the tower invisible.
-     */
     public void makeInvisible() {
         isVisible = false;
         base.makeInvisible();
@@ -203,13 +353,13 @@ public class Tower {
         System.exit(0);
     }
     
-    
-    
     private int calculateHeight() {
         int total = 0;
         for (Object item : items) {
             if (item instanceof Cup) {
                 total += ((Cup) item).getHeight();
+            } else if (item instanceof Lid) {
+                total += ((Lid) item).getHeight();
             }
         }
         return total;
@@ -218,6 +368,15 @@ public class Tower {
     private boolean cupExists(int number) {
         for (Object item : items) {
             if (item instanceof Cup && ((Cup) item).getNumber() == number) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean lidExists(int number) {
+        for (Object item : items) {
+            if (item instanceof Lid && ((Lid) item).getNumber() == number) {
                 return true;
             }
         }
@@ -277,10 +436,16 @@ public class Tower {
                 itemHeight = cup.getHeight();
                 itemWidth = cup.getWidth();
                 color = cup.getColor();
+            } else {
+                Lid lid = (Lid) item;
+                itemHeight = lid.getHeight();
+                itemWidth = lid.getWidth();
+                color = lid.getColor();
             }
             
             int pixelHeight = itemHeight * PIXELS_PER_CM;
             int yPos = BASE_Y - ((currentHeight + itemHeight) * PIXELS_PER_CM);
+            
             visual.changeSize(pixelHeight, itemWidth);
             visual.changeColor(color);
             visual.moveHorizontal(BASE_X - 70);
