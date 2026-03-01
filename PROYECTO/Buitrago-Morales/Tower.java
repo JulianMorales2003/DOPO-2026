@@ -41,6 +41,34 @@ public class Tower {
         initializeBase();
     }
     
+    /**
+     * Se crea una torre a partir de n cantidad de copas y con esta cantidad de copas se calcula la altura maxima y el ancho minimo para el funcionamiento del juego.
+     * @param n es la cantidad de copas que se desean.
+     */
+    
+    public Tower(int numberOfCups) {
+        if (numberOfCups < 0) throw new IllegalArgumentException("numberOfCups must be >= 0");
+
+        this.width     = (numberOfCups == 0) ? 0 : (2 * numberOfCups - 1);
+        this.maxHeight = numberOfCups * numberOfCups;
+
+        this.items = new ArrayList<>();
+        this.isVisible = false;
+        this.heightMarkers = new ArrayList<>();
+
+        this.scale = Math.min(
+            (CANVAS_WIDTH - 2 * MARGIN) / Math.max(1, this.width),
+            (CANVAS_HEIGHT - 2 * MARGIN) / Math.max(1, this.maxHeight)
+        );
+        if (this.scale < 2) this.scale = 2;
+        initializeBase();
+
+        for (int i = 1; i <= numberOfCups; i++) items.add(new Cup(i));
+
+        makeVisible();
+    }
+
+    
     private void initializeBase() {
         base = new Rectangle();
         base.changeSize(5, width * scale);
