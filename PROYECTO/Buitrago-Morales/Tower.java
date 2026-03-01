@@ -131,7 +131,7 @@ public class Tower {
         Cup matchingCup = findCup(i);
         if (matchingCup != null && !matchingCup.hasLid()) {
             matchingCup.setLid(lid);
-            lid.setAssociatedCup(matchingCup);
+            lid.attachTo(matchingCup);
         }
     
         java.util.ArrayList<Object> sim = new java.util.ArrayList<>(items);
@@ -431,7 +431,7 @@ public class Tower {
             if (obj instanceof Cup) {
                 ((Cup) obj).makeVisibleAt(xPos, yPos, wPx, hPx);
             } else {
-                ((Lid) obj).makeVisibleAt(xPos, yPos, wPx, hPx);
+                ((Lid) obj).makeVisible();
             }
     
             if (obj instanceof Cup) {
@@ -477,6 +477,164 @@ public class Tower {
 
         accumulatedHeightCm += groupMaxTopCm;
         return accumulatedHeightCm;
+    }
+    
+    //CICLO 2
+    /** Intercambia dos copas por el mkomento identificadas por sus descriptores {"cup","<numero>"}.
+     *  Ejemplos de uso:
+     *    swap({"cup","4"},{"cup","2"});
+     */
+    public void swap(String[] o1, String[] o2) {
+        // Validación de descriptores
+        if (o1 == null || o2 == null || o1.length != 2 || o2.length != 2) {
+            showError("swap: invalid descriptors");
+            return;
+        }
+    
+        String t1 = (o1[0] == null ? "" : o1[0].trim().toLowerCase());
+        String t2 = (o2[0] == null ? "" : o2[0].trim().toLowerCase());
+        // Solo permitimos COPAS
+        if (!"cup".equals(t1) || !"cup".equals(t2)) {
+            showError("swap: only cups can be swapped");
+            return;
+        }
+    
+        int n1, n2;
+        try {
+            n1 = Integer.parseInt(String.valueOf(o1[1]).trim());
+            n2 = Integer.parseInt(String.valueOf(o2[1]).trim());
+        } catch (NumberFormatException ex) {
+            showError("swap: invalid number in descriptors");
+            return;
+        }
+        if (n1 == n2) return; // nada que hacer
+    
+        // Buscar los índices de cada copa
+        int idx1 = -1, idx2 = -1;
+        for (int i = 0; i < items.size() && (idx1 == -1 || idx2 == -1); i++) {
+            Object it = items.get(i);
+            if (idx1 == -1 && it instanceof Cup && ((Cup) it).getNumber() == n1) idx1 = i;
+            if (idx2 == -1 && it instanceof Cup && ((Cup) it).getNumber() == n2) idx2 = i;
+        }
+        if (idx1 == -1 || idx2 == -1) {
+            showError("swap: cup not found");
+            return;
+        }
+        if (idx1 == idx2) return;
+    
+        // Mantener referencias a las copas involucradas
+        Cup cup1 = (Cup) items.get(idx1);
+        Cup cup2 = (Cup) items.get(idx2);
+    
+        // Ejecutar swap
+        Collections.swap(items, idx1, idx2);
+    
+        // Recolocar tapas a continuación de su copa (si existen)
+        relocateLidNextToCup(cup1);
+        relocateLidNextToCup(cup2);
+    
+        // Validar altura efectiva (anidamiento). Revertir si rompe el límite
+        int eff = calculateEffectiveHeightCm(items);
+        if (eff > maxHeight) {
+            // revertimos swap
+            // (hay que volver a dejar las tapas donde estaban; para simplificar, rehacemos todo)
+            Collections.swap(items, items.indexOf(cup1), items.indexOf(cup2));
+            relocateLidNextToCup(cup1);
+            relocateLidNextToCup(cup2);
+            showError("swap would exceed max height; reverted");
+            return;
+        }
+    
+        if (isVisible) redraw();
+    }
+    
+    /**
+     * @return dos descriptores {"tipo","numero"} del mejor par a intercambiar.
+     *    
+     */
+    
+    public String[][] swapToReduce() {
+        
+        java.util.ArrayList<Integer> cupIdx = new java.util.ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i) instanceof Cup) cupIdx.add(i);
+        }
+        if (cupIdx.size() < 2) {
+            return new String[][] { {"none","-1"}, {"none","-1"} };
+        }
+    
+        int baseEff = calculateEffectiveHeightCm(items);
+        int bestEff = baseEff;
+        int bestA = -1, bestB = -1;            
+        int bestCupNumA = -1, bestCupNumB = -1;
+
+        for (int aPos = 0; aPos < cupIdx.size(); aPos++) {
+            for (int bPos = aPos + 1; bPos < cupIdx.size(); bPos++) {
+                int ia = cupIdx.get(aPos);
+                int ib = cupIdx.get(bPos);
+    
+                Cup ca = (Cup) items.get(ia);
+                Cup cb = (Cup) items.get(ib);
+    
+                java.util.ArrayList<Object> sim = new java.util.ArrayList<>(items);
+                java.util.Collections.swap(sim, ia, ib);
+    
+                relocateLidNextToCupIn(sim, ca);
+                relocateLidNextToCupIn(sim, cb);
+    
+                int eff = calculateEffectiveHeightCm(sim);
+    
+               
+                if (eff < bestEff && eff <= maxHeight) {
+                    bestEff = eff;
+                    bestA = ia; bestB = ib;
+                    bestCupNumA = ca.getNumber();
+                    bestCupNumB = cb.getNumber();
+                }
+            }
+        }
+    
+        if (bestA == -1) {
+            return new String[][] { {"none","-1"}, {"none","-1"} };
+        }
+    
+        // Devolvemos descriptores por número de copa 
+        return new String[][] {
+            { "cup", String.valueOf(bestCupNumA) },
+            { "cup", String.valueOf(bestCupNumB) }
+        };
+    }
+    
+    //Helper para ciclo 2
+    
+    /** En la lista 'list', reubica la tapa de 'cup' inmediatamente después de esa copa. */
+    private void relocateLidNextToCupIn(java.util.List<Object> list, Cup cup) {
+        if (cup == null || !cup.hasLid()) return;
+        Lid lid = cup.getLid();
+        int lidIdx = list.indexOf(lid);
+        if (lidIdx != -1) list.remove(lidIdx);
+        int cupIdx = list.indexOf(cup);
+        if (cupIdx != -1) {
+            int insertAt = Math.min(cupIdx + 1, list.size());
+            list.add(insertAt, lid);
+        }
+    }
+    
+    /** Coloca la tapa asociada (si existe) inmediatamente después de su copa en 'items'. */
+    private void relocateLidNextToCup(Cup cup) {
+        if (cup == null || !cup.hasLid()) return;
+        Lid lid = cup.getLid();
+    
+        // Si la tapa está en la lista, retirarla de su posición actual
+        int lidIdx = items.indexOf(lid);
+        if (lidIdx != -1) items.remove(lidIdx);
+    
+        // Insertarla justo después de la copa
+        int cupIdx = items.indexOf(cup);
+        if (cupIdx != -1) {
+            int insertAt = Math.min(cupIdx + 1, items.size());
+            items.add(insertAt, lid);
+        }
     }
     
     private void showError(String message) {

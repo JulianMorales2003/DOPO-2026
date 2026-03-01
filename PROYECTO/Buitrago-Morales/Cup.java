@@ -142,6 +142,14 @@ public class Cup {
         lastY = y;
         lastW = w;
         lastH = h;
+        
+        if (hasLid()) {
+            getLid().attachTo(this); 
+        }
+        
+        if (hasLid()){
+            getLid().makeVisible();
+        }
     }
 
     /**
@@ -164,6 +172,13 @@ public class Cup {
     public String getColor() { return tone; }
 
     public int getWidth() { return 40 + (cupId * 5); }
+    
+    // En Cup.java (agrega getters públicos)
+    public int getLastX() { return (lastX == null) ? 0 : lastX; }
+    public int getLastY() { return (lastY == null) ? 0 : lastY; }
+    public int getLastW() { return (lastW == null) ? 0 : lastW; }
+    public int getLastH() { return (lastH == null) ? 0 : lastH; }
+                                                                                              
 
     @Override
     public String toString() {
