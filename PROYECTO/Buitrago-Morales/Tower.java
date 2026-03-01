@@ -16,6 +16,7 @@ public class Tower {
     private static final int CANVAS_WIDTH = 300;
     private static final int CANVAS_HEIGHT = 300;
     private static final int MARGIN = 25;
+    private static final int WALL_CM = 1;
     
     private Rectangle base;
     private ArrayList<Rectangle> heightMarkers;
@@ -51,14 +52,15 @@ public class Tower {
             showError("Cup #" + i + " already exists");
             return;
         }
-        
         Cup cup = new Cup(i);
-        
-        if (calculateHeight() + cup.getHeight() <= maxHeight) {
+        java.util.ArrayList<Object> sim = new java.util.ArrayList<>(items);
+        sim.add(cup);
+        int eff = calculateEffectiveHeightCm(sim);
+        if (eff <= maxHeight) {
             items.add(cup);
             if (isVisible) redraw();
         } else {
-            showError("Cannot add cup #" + i + ": exceeds max height");
+            showError("Cannot add cup #" + i + ": exceeds max height when stacked");
         }
     }
     
@@ -97,19 +99,22 @@ public class Tower {
             showError("Lid #" + i + " already exists");
             return;
         }
-        
         Lid lid = new Lid(i);
-        
-        if (calculateHeight() + lid.getHeight() <= maxHeight) {
-            Cup matchingCup = findCup(i);
-            if (matchingCup != null && !matchingCup.hasLid()) {
-                matchingCup.setLid(lid);
-                lid.setAssociatedCup(matchingCup);
-            }
+        Cup matchingCup = findCup(i);
+        if (matchingCup != null && !matchingCup.hasLid()) {
+            matchingCup.setLid(lid);
+            lid.setAssociatedCup(matchingCup);
+        }
+    
+        java.util.ArrayList<Object> sim = new java.util.ArrayList<>(items);
+        sim.add(lid);
+        int eff = calculateEffectiveHeightCm(sim);
+    
+        if (eff <= maxHeight) {
             items.add(lid);
             if (isVisible) redraw();
         } else {
-            showError("Cannot add lid #" + i + ": exceeds max height");
+            showError("Cannot add lid #" + i + ": exceeds max height when stacked");
         }
     }
     
@@ -217,9 +222,11 @@ public class Tower {
         if (isVisible) redraw();
     }
     
+    
     public int height() {
-        return calculateHeight();
+        return calculateEffectiveHeightCm(items);
     }
+
     
     public int[] lidedCups() {
         ArrayList<Integer> covered = new ArrayList<>();
@@ -274,9 +281,11 @@ public class Tower {
         }
     }
     
+    
     public boolean ok() {
-        return calculateHeight() <= maxHeight;
+        return calculateEffectiveHeightCm(items) <= maxHeight;
     }
+
     
     public void exit() {
         makeInvisible();
@@ -338,40 +347,108 @@ public class Tower {
         heightMarkers.clear();
     }
     
+    
     private void redraw() {
         if (!isVisible) return;
+    
         
         for (Object item : items) {
             if (item instanceof Cup) ((Cup) item).makeInvisible();
             else if (item instanceof Lid) ((Lid) item).makeInvisible();
         }
-        
+    
         int totalWidthPx = width * scale;
         int baseX = (CANVAS_WIDTH - totalWidthPx) / 2;
         int baseY = CANVAS_HEIGHT - MARGIN;
-        int accumulatedHeightCm = 0;
+    
         
-        for (int i = 0; i < items.size(); i++) {
-            Object item = items.get(i);
-            
-            int heightCm = (item instanceof Cup) 
-                ? ((Cup) item).getHeight() 
-                : ((Lid) item).getHeight();
-            
-            int heightPx = heightCm * scale;
-            int widthCm = Math.max(2, width - (i * 1));
-            int widthPx = widthCm * scale;
-            int xPos = baseX + (totalWidthPx - widthPx) / 2;
-            int yPos = baseY - (accumulatedHeightCm + heightCm) * scale;
-            
-            if (item instanceof Cup) {
-                ((Cup) item).makeVisibleAt(xPos, yPos, widthPx, heightPx);
-            } else if (item instanceof Lid) {
-                ((Lid) item).makeVisibleAt(xPos, yPos, widthPx, heightPx);
+        int accumulatedHeightCm = 0;   
+        int groupMaxTopCm = 0;         
+        java.util.Deque<Integer> innerWidthsStack = new java.util.ArrayDeque<>(); 
+    
+        
+        for (int idx = 0; idx < items.size(); idx++) {
+            Object obj = items.get(idx);
+    
+            int hCm = (obj instanceof Cup) ? ((Cup) obj).getHeight()
+                                           : ((Lid) obj).getHeight();
+
+            int outerCm = hCm;
+    
+            int innerCm = Math.max(0, outerCm - 2 * WALL_CM);
+    
+            boolean fitsInCurrent = innerWidthsStack.isEmpty() || (outerCm <= innerWidthsStack.peek());
+    
+            if (!fitsInCurrent) {
+                accumulatedHeightCm += groupMaxTopCm;   
+                groupMaxTopCm = 0;
+                innerWidthsStack.clear();               
+                
+            }
+               
+            int depthCm = innerWidthsStack.size() * WALL_CM;  
+            int topThisCupCm = depthCm + hCm;
+            groupMaxTopCm = Math.max(groupMaxTopCm, topThisCupCm);
+    
+            int hPx = hCm * scale;
+            int wPx = outerCm * scale;
+    
+            int yBottomPx = baseY - (accumulatedHeightCm + depthCm) * scale;
+    
+            int yTopPx = yBottomPx - hPx;
+    
+            int xPos = baseX + (totalWidthPx - wPx) / 2;
+            int yPos = yTopPx;
+    
+            if (obj instanceof Cup) {
+                ((Cup) obj).makeVisibleAt(xPos, yPos, wPx, hPx);
+            } else {
+                ((Lid) obj).makeVisibleAt(xPos, yPos, wPx, hPx);
+            }
+    
+            if (obj instanceof Cup) {
+                innerWidthsStack.push(innerCm);
+            }
+        }
+    
+        accumulatedHeightCm += groupMaxTopCm;
+    
+    }
+    
+    /**
+     * Calcula la altura efectiva (en cm) de la secuencia dada,
+     * permitiendo anidamiento de copas es la regla: ancho exterior = altura.
+     */
+    private int calculateEffectiveHeightCm(java.util.List<Object> sequence) {
+        int accumulatedHeightCm = 0;                
+        int groupMaxTopCm = 0;                      
+        java.util.Deque<Integer> innerWidths = new java.util.ArrayDeque<>(); 
+    
+        for (Object obj : sequence) {
+            int hCm = (obj instanceof Cup) ? ((Cup) obj).getHeight()
+                                           : ((Lid) obj).getHeight();
+            int outerCm = hCm;
+            int innerCm = Math.max(0, outerCm - 2 * WALL_CM);
+            boolean fits = innerWidths.isEmpty() || (outerCm <= innerWidths.peek());
+            if (!fits) {
+                accumulatedHeightCm += groupMaxTopCm;
+                groupMaxTopCm = 0;
+                innerWidths.clear();
             }
             
-            accumulatedHeightCm += heightCm;
+            int depthCm = innerWidths.size() * WALL_CM;
+            int topThis = depthCm + hCm;
+            groupMaxTopCm = Math.max(groupMaxTopCm, topThis);
+    
+            if (obj instanceof Cup) {
+                innerWidths.push(innerCm);
+            } else {
+                if (!innerWidths.isEmpty()) innerWidths.pop();
+            }
         }
+
+        accumulatedHeightCm += groupMaxTopCm;
+        return accumulatedHeightCm;
     }
     
     private void showError(String message) {
