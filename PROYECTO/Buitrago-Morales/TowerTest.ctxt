@@ -1,0 +1,33 @@
+#BlueJ class context
+comment0.target=TowerTest
+comment0.text=\r\n\ Clase\ de\ pruebas\ unitarias\ para\ la\ clase\ Tower.\r\n\r\n\ @author\ Julian\ Morales\ -\ Sergio\ Buitrago\r\n\r\n
+comment1.params=
+comment1.target=void\ constructor_shouldRejectNonPositiveWidth()
+comment1.text=\r\n\ Prueba\ donde\ debe\ rechazar\ width\ <\=\ 0.\r\n
+comment10.params=
+comment10.target=void\ makeVisible_and_makeInvisible_shouldBeCallableSafely()
+comment10.text=\r\n\ Prueba\ de\ los\ makeVisible,\ makeInvisible\ deben\ ser\ invocables\ sin\ lanzar.\r\n
+comment2.params=
+comment2.target=void\ constructor_shouldRejectNonPositiveMaxHeight()
+comment2.text=\r\n\ Prueba\ donde\ debe\ rechazar\ maxHeight\ <\=\ 0.\r\n
+comment3.params=
+comment3.target=void\ constructor_validValues_shouldCreateTower()
+comment4.params=
+comment4.target=void\ pushCup_smallerInsideBigger_shouldNest_andNotIncreaseTotalHeight()
+comment4.text=\r\n\ Prueba\ donde\ permite\ anidar\ (4,\ luego\ 3)\ sin\ aumentar\ altura\ efectiva.\r\n
+comment5.params=
+comment5.target=void\ popCup_shouldRemoveLastCup_andUpdateHeight()
+comment5.text=\r\n\ Prueba\ de\ elimina\ la\ \u00FAltima\ copa\ y\ actualiza\ la\ altura.\r\n\ M\u00E9todos\ cubiertos\:\ pushCup,\ popCup,\ height.\r\n
+comment6.params=
+comment6.target=void\ pushAndRemoveLid_shouldAffectLidedCupsArray()
+comment6.text=\r\n\ Prueba\ de\ tapas\ agregadas/quitadas\ impactan.\r\n
+comment7.params=
+comment7.target=void\ orderTower_shouldReorderButRespectEffectiveHeightBound()
+comment7.text=\r\n\ Prueba\ de\ reordena\ sin\ romper\ el\ l\u00EDmite\ de\ altura\ efectiva.\r\n
+comment8.params=
+comment8.target=void\ reverseTower_shouldReverseSequence_andRecomputeHeight()
+comment8.text=\r\n\ Prueba\ de\ invierte\ la\ secuencia\ y\ recalcula\ altura.\r\n
+comment9.params=
+comment9.target=void\ stackingItems_shouldExposeTypeAndNumber()
+comment9.text=\r\n\ Prueba\ de\ expone\ el\ arreglo\ [tipo,\ n\u00FAmero]\ en\ orden\ actual.\r\n
+numComments=11

@@ -1,0 +1,37 @@
+#BlueJ class context
+comment0.target=CupTest
+comment0.text=\r\n\ Clase\ de\ pruebas\ unitarias\ para\ la\ clase\ Cup.\r\n\r\n\ @author\ Julian\ Morales\ -\ Sergio\ Buitrago\r\n\r\n
+comment1.params=
+comment1.target=void\ constructor_shouldRejectNonPositiveNumber_zero()
+comment1.text=\r\n\ Debe\ rechazar\ un\ identificador\ <\=\ 0\ (cero).\r\n
+comment10.params=
+comment10.target=void\ makeVisibleAt_shouldBeCallableWithValidParams()
+comment10.text=\r\n\ makeVisibleAt(...)\ debe\ poder\ invocarse\ sin\ lanzar\ excepciones\ con\ par\u00E1metros\ v\u00E1lidos.\r\n
+comment11.params=
+comment11.target=void\ makeVisibleAt_shouldHandleMinimalUnit()
+comment11.text=\r\n\ makeVisibleAt(...)\ con\ tama\u00F1os\ m\u00EDnimos\ \u2014unidad\ 1\ px/cm\u2014\ debe\ ser\ seguro.\r\n
+comment2.params=
+comment2.target=void\ constructor_shouldRejectNonPositiveNumber_negative()
+comment2.text=\r\n\ Debe\ rechazar\ un\ identificador\ <\=\ 0\ (negativo).\r\n
+comment3.params=
+comment3.target=void\ height_shouldFollow_2nMinus1_andBeOdd_andMatchGetHeightCm()
+comment3.text=\r\n\ La\ altura\ debe\ seguir\ H(n)\ \=\ 2*n\ -\ 1\ (impar)\ y\ coincidir\ con\ getHeightCm().\r\n
+comment4.params=
+comment4.target=void\ innerHeight_shouldBeHeightMinusOne()
+comment4.text=\r\n\ La\ altura\ interna\ debe\ ser\ H(n)\ -\ 1\ (quitando\ 1\ cm\ de\ base).\r\n
+comment5.params=
+comment5.target=void\ getNumber_shouldReturnConstructorValue()
+comment5.text=\r\n\ getNumber()\ debe\ devolver\ el\ n\u00FAmero\ con\ el\ que\ se\ construy\u00F3\ la\ copa.\r\n
+comment6.params=
+comment6.target=void\ color_shouldCycleOverPalette()
+comment6.text=\r\n\ El\ color\ debe\ asignarse\ de\ forma\ c\u00EDclica\ seg\u00FAn\ la\ paleta\ definida.\r\n
+comment7.params=
+comment7.target=void\ getWidth_shouldFollowInformativeRule()
+comment7.text=\r\n\ getWidth()\ debe\ seguir\ la\ regla\ informativa\ 40\ +\ 5*n\ (seg\u00FAn\ implementaci\u00F3n\ actual).\r\n
+comment8.params=
+comment8.target=void\ toString_shouldContainNumberHeight_andNoLidByDefault()
+comment8.text=\r\n\ toString()\ debe\ incluir\ el\ n\u00FAmero,\ la\ altura\ y\ por\ defecto\ "sin\ tapa".\r\n
+comment9.params=
+comment9.target=void\ makeInvisible_shouldBeCallableSafely_andIdempotent()
+comment9.text=\r\n\ makeInvisible()\ debe\ ser\ seguro\ e\ idempotente\ (m\u00FAltiples\ llamadas\ sin\ error).\r\n
+numComments=12
