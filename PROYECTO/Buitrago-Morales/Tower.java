@@ -379,7 +379,6 @@ public class Tower {
     private void redraw() {
         if (!isVisible) return;
     
-        
         for (Object item : items) {
             if (item instanceof Cup) ((Cup) item).makeInvisible();
             else if (item instanceof Lid) ((Lid) item).makeInvisible();
@@ -389,20 +388,18 @@ public class Tower {
         int baseX = (CANVAS_WIDTH - totalWidthPx) / 2;
         int baseY = CANVAS_HEIGHT - MARGIN;
     
-        
         int accumulatedHeightCm = 0;   
         int groupMaxTopCm = 0;         
         java.util.Deque<Integer> innerWidthsStack = new java.util.ArrayDeque<>(); 
+        java.util.List<Lid> associatedLidsToDrawLater = new java.util.ArrayList<>();
     
-        
         for (int idx = 0; idx < items.size(); idx++) {
             Object obj = items.get(idx);
     
             int hCm = (obj instanceof Cup) ? ((Cup) obj).getHeight()
                                            : ((Lid) obj).getHeight();
-
-            int outerCm = hCm;
     
+            int outerCm = hCm;
             int innerCm = Math.max(0, outerCm - 2 * WALL_CM);
     
             boolean fitsInCurrent = innerWidthsStack.isEmpty() || (outerCm <= innerWidthsStack.peek());
@@ -411,7 +408,6 @@ public class Tower {
                 accumulatedHeightCm += groupMaxTopCm;   
                 groupMaxTopCm = 0;
                 innerWidthsStack.clear();               
-                
             }
                
             int depthCm = innerWidthsStack.size() * WALL_CM;  
@@ -422,26 +418,38 @@ public class Tower {
             int wPx = outerCm * scale;
     
             int yBottomPx = baseY - (accumulatedHeightCm + depthCm) * scale;
-    
             int yTopPx = yBottomPx - hPx;
     
             int xPos = baseX + (totalWidthPx - wPx) / 2;
             int yPos = yTopPx;
     
             if (obj instanceof Cup) {
-                ((Cup) obj).makeVisibleAt(xPos, yPos, wPx, hPx);
-            } else {
-                ((Lid) obj).makeVisible();
-            }
-    
-            if (obj instanceof Cup) {
+                Cup cup = (Cup) obj;
+                cup.makeVisibleAt(xPos, yPos, wPx, hPx);
+                
+                if (cup.hasLid()) {
+                    associatedLidsToDrawLater.add(cup.getLid());
+                }
+                
                 innerWidthsStack.push(innerCm);
+                
+            } else if (obj instanceof Lid) {
+                Lid lid = (Lid) obj;
+                
+                if (!lid.isOnCup()) {
+                    lid.makeVisible();
+                }
+                
             }
         }
     
         accumulatedHeightCm += groupMaxTopCm;
-    
+        
+        for (Lid lid : associatedLidsToDrawLater) {
+            lid.makeVisible(); 
+        }
     }
+    
     
     /**
      * Calcula la altura efectiva (en cm) de la secuencia dada,
@@ -485,7 +493,7 @@ public class Tower {
      *    swap({"cup","4"},{"cup","2"});
      */
     public void swap(String[] o1, String[] o2) {
-        // Validación de descriptores
+        
         if (o1 == null || o2 == null || o1.length != 2 || o2.length != 2) {
             showError("swap: invalid descriptors");
             return;
@@ -493,7 +501,6 @@ public class Tower {
     
         String t1 = (o1[0] == null ? "" : o1[0].trim().toLowerCase());
         String t2 = (o2[0] == null ? "" : o2[0].trim().toLowerCase());
-        // Solo permitimos COPAS
         if (!"cup".equals(t1) || !"cup".equals(t2)) {
             showError("swap: only cups can be swapped");
             return;
@@ -507,9 +514,7 @@ public class Tower {
             showError("swap: invalid number in descriptors");
             return;
         }
-        if (n1 == n2) return; // nada que hacer
-    
-        // Buscar los índices de cada copa
+        if (n1 == n2) return;
         int idx1 = -1, idx2 = -1;
         for (int i = 0; i < items.size() && (idx1 == -1 || idx2 == -1); i++) {
             Object it = items.get(i);
@@ -522,22 +527,14 @@ public class Tower {
         }
         if (idx1 == idx2) return;
     
-        // Mantener referencias a las copas involucradas
         Cup cup1 = (Cup) items.get(idx1);
         Cup cup2 = (Cup) items.get(idx2);
-    
-        // Ejecutar swap
         Collections.swap(items, idx1, idx2);
-    
-        // Recolocar tapas a continuación de su copa (si existen)
         relocateLidNextToCup(cup1);
         relocateLidNextToCup(cup2);
     
-        // Validar altura efectiva (anidamiento). Revertir si rompe el límite
         int eff = calculateEffectiveHeightCm(items);
-        if (eff > maxHeight) {
-            // revertimos swap
-            // (hay que volver a dejar las tapas donde estaban; para simplificar, rehacemos todo)
+        if (eff > maxHeight) {                       
             Collections.swap(items, items.indexOf(cup1), items.indexOf(cup2));
             relocateLidNextToCup(cup1);
             relocateLidNextToCup(cup2);
@@ -545,6 +542,22 @@ public class Tower {
             return;
         }
     
+        if (isVisible) redraw();
+    }
+    
+    public void cover() {
+        for (Object item : items) {
+            if (item instanceof Cup) {
+                Cup cup = (Cup) item;
+                Lid matchingLid = findLid(cup.getNumber());
+                
+                if (matchingLid != null && !cup.hasLid()) {
+                    cup.setLid(matchingLid);
+                    matchingLid.attachTo(cup);
+                }
+            }
+        }
+        
         if (isVisible) redraw();
     }
     
@@ -605,7 +618,7 @@ public class Tower {
         };
     }
     
-    //Helper para ciclo 2
+    //Helpers para ciclo 2
     
     /** En la lista 'list', reubica la tapa de 'cup' inmediatamente después de esa copa. */
     private void relocateLidNextToCupIn(java.util.List<Object> list, Cup cup) {
@@ -618,6 +631,15 @@ public class Tower {
             int insertAt = Math.min(cupIdx + 1, list.size());
             list.add(insertAt, lid);
         }
+    }
+    
+    private Lid findLid(int number) {
+        for (Object item : items) {
+            if (item instanceof Lid && ((Lid) item).getNumber() == number) {
+                return (Lid) item;
+            }
+        }
+        return null;
     }
     
     /** Coloca la tapa asociada (si existe) inmediatamente después de su copa en 'items'. */
