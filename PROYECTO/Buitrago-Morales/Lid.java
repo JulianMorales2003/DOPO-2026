@@ -1,98 +1,147 @@
 /**
  * Representa la tapa que está relacionada con la copa.
+ * Dibuja una línea delgada que se acopla al borde superior interno de su copa.
+ * Si no tiene copa asociada, se dibuja de forma independiente.
  * 
  * @author Julian Morales - Sergio Buitrago
- */
-
-/**
- * Representa la tapa como línea delgada que se acopla al borde interno superior de su copa.
  */
 public class Lid {
     private int number;
     private String color;
     private Cup associatedCup;
-
     private Rectangle rect;
-    private static final int RECT_DEFAULT_X = 70;
-    private static final int RECT_DEFAULT_Y = 15;
 
+    /** Posición inicial del Rectangle según su constructor. */
+    private static final int RECT_INIT_X = 70;
+    private static final int RECT_INIT_Y = 15;
+
+    /** Posición real actual del rect en el canvas (trackeada manualmente). */
+    private int rectX = RECT_INIT_X;
+    private int rectY = RECT_INIT_Y;
+
+    /**
+     * Crea una tapa con el número dado.
+     * @param number número identificador de la tapa, debe ser mayor a 0.
+     */
     public Lid(int number) {
         if (number <= 0) throw new IllegalArgumentException("Lid number must be positive");
         this.number = number;
-        this.color = generateColor(number); // fallback si aún no hay copa
+        this.color  = generateColor(number);
         this.associatedCup = null;
         this.rect = new Rectangle();
+        this.rectX = RECT_INIT_X;
+        this.rectY = RECT_INIT_Y;
     }
 
+    /**
+     * Genera un color basado en el número de la tapa.
+     * @param number número de la tapa.
+     * @return color asignado.
+     */
     private String generateColor(int number) {
         String[] colors = {"red", "blue", "green", "yellow", "magenta", "black"};
         return colors[(number - 1) % colors.length];
     }
 
-    /** Asocia la tapa a una copa (sin pasar posiciones). */
+    /**
+     * Asocia esta tapa a una copa y sincroniza su color y número con ella.
+     * @param cup la copa a la que se asocia la tapa.
+     */
     public void attachTo(Cup cup) {
         this.associatedCup = cup;
-        if (cup != null) this.color = cup.getColor(); // sincroniza color
-        // Si ya está dibujada la copa, nos acoplamos de una
+        if (cup != null) {
+            this.color  = cup.getColor();
+            this.number = cup.getNumber();
+        }
         snapToCup();
     }
 
-    /** Acopla la tapa a la geometría actual de la copa (si existe y fue dibujada). */
+    /**
+     * Acopla visualmente la tapa al borde superior de su copa.
+     * Solo dibuja si la copa ya fue renderizada (cupW y cupH > 0).
+     * Si la copa aún no fue dibujada, no hace nada (se dibujará cuando Tower llame redraw).
+     */
     public void snapToCup() {
         if (associatedCup == null) return;
-        // La copa debe proveer su última geometría en pantalla:
-        int cupX = associatedCup.getLastX();      // top‑left del rectángulo de la COPA
+
+        int cupX = associatedCup.getLastX();
         int cupY = associatedCup.getLastY();
         int cupW = associatedCup.getLastW();
         int cupH = associatedCup.getLastH();
-        if (cupW <= 0 || cupH <= 0) return;       // aún no ha sido dibujada
 
-        // px/cm derivados de la altura real de la copa dibujada
-        int unitPx = Math.max(1, cupH / Math.max(1, associatedCup.getHeight()));
+        if (cupW <= 0 || cupH <= 0) return;
 
-        // Ancho exterior real de la copa (regla: outer = altura en cm)
-        int outerPx = associatedCup.getHeight() * unitPx;
-
-        // La copa se centra en cupW: hay que hallar la X izquierda real de su “U”
-        int xCupLeft = cupX + (cupW - outerPx) / 2;
-
-        // Pared visual mínima de la “U”
-        int wallPx = 1;
-
-        // Longitud interior = ancho interior de la copa
-        int innerPx = Math.max(1, outerPx - 2 * wallPx);
-
-        // Espesor de la tapa: 0.3 cm (>=1 px)
-        int lineThPx = Math.max(1, Math.round(0.3f * unitPx));
-
-        // Borde interno superior de la copa: Y del top de la copa
-        int finalX = xCupLeft + wallPx;
-        int finalY = cupY; // justo el límite superior interno
-        int finalW = innerPx;
+        int targetW  = cupW;
+        int lidThick = Math.max(3, cupH / 5);
+        int targetX  = cupX;
+        int targetY  = cupY;
 
         rect.changeColor(associatedCup.getColor());
-        rect.changeSize(lineThPx, finalW);
-        rect.moveHorizontal(finalX - RECT_DEFAULT_X);
-        rect.moveVertical(finalY - RECT_DEFAULT_Y);
+        rect.changeSize(lidThick, targetW);
+        rect.moveHorizontal(targetX - rectX);
+        rect.moveVertical(targetY - rectY);
+
+        rectX = targetX;
+        rectY = targetY;
+
         rect.makeVisible();
     }
 
-    /** Muestra la tapa (se acopla automáticamente). */
+    /**
+     * Hace visible la tapa. Si tiene copa, se acopla a ella.
+     * Si no tiene copa, se dibuja de forma independiente.
+     */
     public void makeVisible() {
-        snapToCup();
+        if (associatedCup != null) {
+            snapToCup();
+        } else {
+            drawStandalone();
+        }
     }
 
-    public void makeInvisible() { rect.makeInvisible(); }
+    /**
+     * Dibuja la tapa de forma independiente cuando no tiene copa asociada.
+     * Usa el número de la tapa para determinar su ancho.
+     */
+    private void drawStandalone() {
+        int widthPx  = number * 10;
+        int heightPx = 3;
+        rect.changeColor(color);
+        rect.changeSize(heightPx, widthPx);
+        rect.makeVisible();
+    }
 
-    // ---- Getters básicos / API compatibilidad ----
-    public int getNumber() { return number; }
-    public int getHeight() { return 1; }      // mantener 1 cm para Tower (no se usa ya para posicionar)
-    public int getHeightCm() { return 1; }
-    public String getColor() { return (associatedCup != null) ? associatedCup.getColor() : color; }
+    /**
+     * Hace invisible la tapa en el canvas.
+     * No modifica la posición trackeada del rect.
+     */
+    public void makeInvisible() {
+        rect.makeInvisible();
+    }
+
+    // ---- Getters ----
+
+    /** @return número identificador de la tapa. */
+    public int getNumber()        { return number; }
+
+    /** @return altura de la tapa en cm (siempre 1, para compatibilidad con Tower). */
+    public int getHeight()        { return 1; }
+
+    /** @return altura de la tapa en cm. */
+    public int getHeightCm()      { return 1; }
+
+    /** @return color de la tapa; si tiene copa, devuelve el color de la copa. */
+    public String getColor()      { return (associatedCup != null) ? associatedCup.getColor() : color; }
+
+    /** @return la copa a la que está asociada, o null si no tiene. */
     public Cup getAssociatedCup() { return associatedCup; }
-    public boolean isOnCup() { return associatedCup != null; }
 
-    @Override public String toString() {
-        return "Tapa #" + number + (associatedCup != null ? " (sobre copa #" + associatedCup.getNumber() + ")" : " (sin copa)");
+    /** @return true si la tapa está asociada a una copa. */
+    public boolean isOnCup()      { return associatedCup != null; }
+
+    public String toString() {
+        return "Tapa #" + number + (associatedCup != null
+            ? " (sobre copa #" + associatedCup.getNumber() + ")"
+            : " (sin copa)");
     }
 }
