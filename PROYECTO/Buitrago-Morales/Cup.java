@@ -174,10 +174,10 @@ public class Cup {
     public int getWidth() { return 40 + (cupId * 5); }
     
     
-     public int getLastX() { return (lastX == null) ? 0 : lastX; }
-     public int getLastY() { return (lastY == null) ? 0 : lastY; }
-     public int getLastW() { return (lastW == null) ? 0 : lastW; }   
-     public int getLastH() { return (lastH == null) ? 0 : lastH; }
+    public int getLastX() { return (lastX == null) ? 0 : lastX; }
+    public int getLastY() { return (lastY == null) ? 0 : lastY; }
+    public int getLastW() { return (lastW == null) ? 0 : lastW; }   
+    public int getLastH() { return (lastH == null) ? 0 : lastH; }
                                                                                               
 
     @Override
