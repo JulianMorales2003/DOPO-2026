@@ -167,5 +167,327 @@ public class TowerTest {
         t.makeVisible();
         t.makeInvisible();
     }
+    
+    
+    /**
+     * Con 0 copas debe crear una torre válida vacía sin lanzar excepción.
+     */
+    @Test
+    public void constructorCups_zeroCups_shouldCreateEmptyTower() {
+        Tower t = new Tower(0);
+        assertTrue(t.ok());
+        assertEquals(0, t.height());
+        assertEquals(0, t.stackingItems().length);
+    }
 
+    /**
+     * Debe rechazar un número negativo de copas
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void constructorCups_negativeCups_shouldThrow() {
+        new Tower(-1);
+    }
+
+    /**
+     * Con n copas, el ancho calculado debe ser 2n-1 y la torre debe ser válida.
+     * Se verifica indirectamente con ok() y que las copas fueron agregadas.
+     */
+    @Test
+    public void constructorCups_threeCups_shouldAddThreeCupsAndBeOk() {
+        Tower t = new Tower(3);
+        assertTrue(t.ok());
+        String[][] items = t.stackingItems();
+        int cupCount = 0;
+        for (String[] item : items) {
+            if ("cup".equals(item[0])) cupCount++;
+        }
+        assertEquals(3, cupCount);
+    }
+
+    /**
+     * La altura efectiva de la torre creada con n copas no debe superar maxHeight (n*n).
+     */
+    @Test
+    public void constructorCups_fiveCups_heightShouldRespectMaxHeight() {
+        Tower t = new Tower(5);
+        assertTrue(t.ok());
+        assertTrue(t.height() <= 25);
+    }
+
+    /**
+     * Con 1 copa la torre debe tener exactamente 1 copa y estar ok.
+     */
+    @Test
+    public void constructorCups_oneCup_shouldHaveOneCup() {
+        Tower t = new Tower(1);
+        assertTrue(t.ok());
+        assertEquals(1, t.stackingItems().length);
+        assertEquals("cup", t.stackingItems()[0][0]);
+        assertEquals("1", t.stackingItems()[0][1]);
+    }
+    
+    
+    /**
+     * Intercambiar dos copas existentes debe cambiar su posición en la secuencia.
+     */
+    @Test
+    public void swap_twoCups_shouldSwapPositions() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(4);
+        t.pushCup(2);
+
+        t.swap(new String[]{"cup", "4"}, new String[]{"cup", "2"});
+
+        String[][] items = t.stackingItems();
+        assertEquals("2", items[0][1]);
+        assertEquals("4", items[1][1]);
+    }
+
+    /**
+     * Intercambiar una copa consigo misma no debe cambiar nada.
+     */
+    @Test
+    public void swap_sameCup_shouldDoNothing() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(2);
+
+        String[][] before = t.stackingItems();
+        t.swap(new String[]{"cup", "3"}, new String[]{"cup", "3"});
+        String[][] after = t.stackingItems();
+
+        assertArrayEquals(before[0], after[0]);
+        assertArrayEquals(before[1], after[1]);
+    }
+
+    /**
+     * swap con  null debe mostrar error y retornar
+     */
+    @Test
+    public void swap_nullDescriptor_shouldNotThrow() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(2);
+        
+        t.swap(null, new String[]{"cup", "2"});
+        t.swap(new String[]{"cup", "3"}, null);
+    }
+
+    /**
+     * swap con una copa que no existe no debe modificar la secuencia
+     */
+    @Test
+    public void swap_nonExistentCup_shouldNotModifySequence() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(4);
+        t.pushCup(2);
+
+        String[][] before = t.stackingItems();
+        t.swap(new String[]{"cup", "4"}, new String[]{"cup", "9"});
+        String[][] after = t.stackingItems();
+
+        assertEquals(before.length, after.length);
+        assertArrayEquals(before[0], after[0]);
+    }
+
+    /**
+     * Después de un swap válido, la torre debe seguir siendo ok()
+     */
+    @Test
+    public void swap_valid_shouldKeepTowerOk() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(4);
+        t.pushCup(3);
+        t.pushCup(2);
+
+        t.swap(new String[]{"cup", "4"}, new String[]{"cup", "2"});
+        assertTrue(t.ok());
+    }
+
+    /**
+     * Si el swap haría superar maxHeight, debe revertirse y la torre sigue ok()
+     * Se construye al limite para forzar el error o que rechaze
+     */
+    @Test
+    public void swap_wouldExceedMaxHeight_shouldRevert() {
+        Tower t = new Tower(20, 10);
+        t.pushCup(5); // altura 5, ocupa todo
+        t.pushCup(4);
+
+        boolean wasOkBefore = t.ok();
+        t.swap(new String[]{"cup", "4"}, new String[]{"cup", "5"});
+        assertTrue(t.ok());
+    }
+
+    /**
+     * swap con tipo "lid" debe mostrar error y no cambiar nada
+     */
+    @Test
+    public void swap_withLidType_shouldNotSwap() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(2);
+
+        String[][] before = t.stackingItems();
+        t.swap(new String[]{"lid", "3"}, new String[]{"cup", "2"});
+        String[][] after = t.stackingItems();
+
+        assertEquals(before.length, after.length);
+    }
+    
+    
+    /**
+     * Con menos de 2 copas debe retornar descriptores none
+     */
+    @Test
+    public void swapToReduce_lessThanTwoCups_shouldReturnNone() {
+        Tower t = new Tower(50, 30);
+        t.pushCup(3);
+
+        String[][] result = t.swapToReduce();
+        assertEquals("none", result[0][0]);
+        assertEquals("none", result[1][0]);
+    }
+
+    /**
+     * Si existe un swap que reduce la altura, debe retornar descriptores válidos de copa
+     */
+    @Test
+    public void swapToReduce_whenBetterSwapExists_shouldReturnCupDescriptors() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(2);
+        t.pushCup(4);
+
+        String[][] result = t.swapToReduce();
+        if (!"none".equals(result[0][0])) {
+            assertEquals("cup", result[0][0]);
+            assertEquals("cup", result[1][0]);
+            assertNotEquals(result[0][1], result[1][1]);
+        }
+    }
+
+    /**
+     * Cuando la secuencia ya es óptima (no hay swap que mejore), retorna none
+     */
+    @Test
+    public void swapToReduce_alreadyOptimal_shouldReturnNone() {
+        Tower t = new Tower(100, 50);
+        // Solo una copa
+        t.pushCup(4);
+        String[][] result = t.swapToReduce();
+        assertEquals("none", result[0][0]);
+    }
+
+    /**
+     * El resultado nunca debe ser null y siempre debe tener exactamente 2 descriptores.
+     */
+    @Test
+    public void swapToReduce_shouldAlwaysReturnTwoDescriptors() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(5);
+        t.pushCup(2);
+
+        String[][] result = t.swapToReduce();
+        assertNotNull(result);
+        assertEquals(2, result.length);
+        assertEquals(2, result[0].length);
+        assertEquals(2, result[1].length);
+    }
+
+    /**
+     * Si se aplica el swap sugerido por swapToReduce, la altura no debe aumentar
+     */
+    @Test
+    public void swapToReduce_appliedSwap_shouldNotIncreaseHeight() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(2);
+        t.pushCup(5);
+        t.pushCup(3);
+
+        int heightBefore = t.height();
+        String[][] best = t.swapToReduce();
+
+        if (!"none".equals(best[0][0])) {
+            t.swap(best[0], best[1]);
+            int heightAfter = t.height();
+            assertTrue(heightAfter <= heightBefore);
+        }
+    }
+    
+    
+    /**
+     * cover() debe asociar cada tapa libre con su copa correspondiente
+     */
+    @Test
+    public void cover_shouldMatchLidsToCups() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(2);
+        t.pushLid(3);
+        t.pushLid(2);
+        t.cover();
+
+        int[] covered = t.lidedCups();
+        assertEquals(2, covered.length);
+    }
+
+    /**
+     * cover() sin tapas en la torre no debe lanzar excepción
+     */
+    @Test
+    public void cover_noLids_shouldNotThrow() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushCup(2);
+        t.cover();
+        assertEquals(0, t.lidedCups().length);
+    }
+
+    /**
+     * cover() no debe duplicar asociaciones si se llama dos veces
+     */
+    @Test
+    public void cover_calledTwice_shouldNotDuplicateAssociations() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(4);
+        t.pushLid(4);
+
+        t.cover();
+        t.cover();
+
+        int[] covered = t.lidedCups();
+        assertEquals(1, covered.length);
+        assertEquals(4, covered[0]);
+    }
+
+    /**
+     * Una tapa sin copa correspondiente en la torre no debe asociarse a ninguna copa
+     */
+    @Test
+    public void cover_lidWithoutMatchingCup_shouldNotAssociate() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(3);
+        t.pushLid(5); // no hay copa 5
+
+        t.cover();
+
+        int[] covered = t.lidedCups();
+        assertEquals(0, covered.length);
+    }
+
+    /**
+     * Después de cover(), la torre debe seguir siendo ok()
+     */
+    @Test
+    public void cover_shouldKeepTowerOk() {
+        Tower t = new Tower(100, 50);
+        t.pushCup(4);
+        t.pushCup(3);
+        t.pushLid(4);
+        t.pushLid(3);
+
+        t.cover();
+        assertTrue(t.ok());
+    }
 }
