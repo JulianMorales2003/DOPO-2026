@@ -546,19 +546,21 @@ public class Tower {
     }
     
     public void cover() {
+        ArrayList<Integer> cupNumbers = new ArrayList<>();
+        
         for (Object item : items) {
             if (item instanceof Cup) {
                 Cup cup = (Cup) item;
-                Lid matchingLid = findLid(cup.getNumber());
-                
-                if (matchingLid != null && !cup.hasLid()) {
-                    cup.setLid(matchingLid);
-                    matchingLid.attachTo(cup);
-                }
+                cupNumbers.add(cup.getNumber());
             }
         }
         
-        if (isVisible) redraw();
+        for (Integer cupNumber : cupNumbers) {
+            
+            if (!lidExists(cupNumber)) {
+                pushLid(cupNumber);
+            }
+        }
     }
     
     /**
