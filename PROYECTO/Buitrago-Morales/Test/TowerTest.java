@@ -1,5 +1,8 @@
+package test;
+
 import static org.junit.Assert.*;
 import org.junit.Test;
+import tower.Tower;
 
 /**
  * Clase de pruebas unitarias para la clase Tower.
@@ -34,7 +37,7 @@ public class TowerTest {
         t.pushCup(4);
         assertTrue(t.ok());
         assertEquals(7, t.height());
-        t.pushCup(3); 
+        t.pushCup(3);
         assertTrue(t.ok());
         assertEquals(7, t.height());
     }
@@ -43,11 +46,11 @@ public class TowerTest {
     public void popCup_shouldRemoveLastCup_andUpdateHeight() {
         Tower t = new Tower(60, 40);
         t.pushCup(4);
-        t.pushCup(3); 
+        t.pushCup(3);
         assertEquals(7, t.height());
-        t.popCup();  
+        t.popCup();
         assertEquals(7, t.height());
-        t.popCup();   
+        t.popCup();
         assertEquals(0, t.height());
     }
 
@@ -91,10 +94,7 @@ public class TowerTest {
         t.pushCup(4);
         t.pushCup(3);
         t.pushCup(2);
-        int before = t.height();
         t.reverseTower();
-        int after = t.height();
-        assertTrue(after >= 0);
         assertTrue(t.height() >= 0);
     }
 
@@ -116,23 +116,13 @@ public class TowerTest {
         Tower t = new Tower(60, 40);
         t.pushCup(3);
         t.pushCup(2);
-        // NO llamar makeVisible() para evitar ventanas
         assertTrue(t.ok());
         assertEquals(2, t.stackingItems().length);
     }
-    
-    // ---------------------------------------------------------------
-    // Constructor Tower(int numberOfCups)
-    // NOTA: Se omiten makeVisible() — el constructor lo llama
-    // internamente, pero los asserts se hacen sin abrir ventana extra.
-    // ---------------------------------------------------------------
 
     @Test
     public void constructorCups_zeroCups_shouldCreateEmptyTower() {
-        // Tower(0) no añade copas, por lo que makeVisible sobre
-        // una torre vacía es inocuo (no hay objetos que dibujar),
-        // pero para evitar cualquier ventana usamos Tower(int,int).
-        Tower t = new Tower(40, 50); // equivalente vacío sin GUI
+        Tower t = new Tower(40, 50);
         assertTrue(t.ok());
         assertEquals(0, t.height());
         assertEquals(0, t.stackingItems().length);
@@ -145,15 +135,13 @@ public class TowerTest {
 
     @Test
     public void constructorCups_threeCups_shouldAddThreeCupsAndBeOk() {
-        // Creamos manualmente 3 copas para no invocar makeVisible
         Tower t = new Tower(100, 50);
         t.pushCup(1);
         t.pushCup(2);
         t.pushCup(3);
         assertTrue(t.ok());
-        String[][] items = t.stackingItems();
         int cupCount = 0;
-        for (String[] item : items) {
+        for (String[] item : t.stackingItems()) {
             if ("cup".equals(item[0])) cupCount++;
         }
         assertEquals(3, cupCount);
@@ -161,7 +149,6 @@ public class TowerTest {
 
     @Test
     public void constructorCups_fiveCups_heightShouldRespectMaxHeight() {
-        // Creamos manualmente 5 copas para no invocar makeVisible
         Tower t = new Tower(100, 50);
         t.pushCup(1);
         t.pushCup(2);
@@ -174,7 +161,6 @@ public class TowerTest {
 
     @Test
     public void constructorCups_oneCup_shouldHaveOneCup() {
-        // Creamos manualmente 1 copa para no invocar makeVisible
         Tower t = new Tower(10, 20);
         t.pushCup(1);
         assertTrue(t.ok());
@@ -182,7 +168,7 @@ public class TowerTest {
         assertEquals("cup", t.stackingItems()[0][0]);
         assertEquals("1", t.stackingItems()[0][1]);
     }
-    
+
     @Test
     public void swap_twoCups_shouldSwapPositions() {
         Tower t = new Tower(100, 50);
@@ -256,7 +242,7 @@ public class TowerTest {
         String[][] after = t.stackingItems();
         assertEquals(before.length, after.length);
     }
-    
+
     @Test
     public void swapToReduce_lessThanTwoCups_shouldReturnNone() {
         Tower t = new Tower(50, 30);
@@ -310,11 +296,10 @@ public class TowerTest {
         String[][] best = t.swapToReduce();
         if (!"none".equals(best[0][0])) {
             t.swap(best[0], best[1]);
-            int heightAfter = t.height();
-            assertTrue(heightAfter <= heightBefore);
+            assertTrue(t.height() <= heightBefore);
         }
     }
-    
+
     @Test
     public void cover_shouldMatchLidsToCups() {
         Tower t = new Tower(100, 50);
@@ -323,8 +308,7 @@ public class TowerTest {
         t.pushLid(3);
         t.pushLid(2);
         t.cover();
-        int[] covered = t.lidedCups();
-        assertEquals(2, covered.length);
+        assertEquals(2, t.lidedCups().length);
     }
 
     @Test
@@ -352,12 +336,10 @@ public class TowerTest {
     public void cover_lidWithoutMatchingCup_shouldNotAssociateUnmatchedLid() {
         Tower t = new Tower(100, 50);
         t.pushCup(3);
-        t.pushLid(5);  
+        t.pushLid(5);
         t.cover();
-        int[] covered = t.lidedCups();
-        
-        for (int c : covered) {
-            assertNotEquals(5, c);  
+        for (int c : t.lidedCups()) {
+            assertNotEquals(5, c);
         }
     }
 
