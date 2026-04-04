@@ -87,7 +87,7 @@ public class Tower {
     
     
     /**
-     * Agrega una copa NORMAL (comportamiento original).
+     * Agrega una copa NORMAL .
      * Mantiene compatibilidad con código anterior.
      */
     public void pushCup(int i) {
@@ -163,7 +163,7 @@ public class Tower {
     }
     
     /**
-     * Elimina todas las tapas (para OpenerCup).
+     * Elimina todas las tapas para OpenerCup.
      */
     private void removeLidsInPath() {
         ArrayList<Object> toRemove = new ArrayList<>();
@@ -185,9 +185,7 @@ public class Tower {
     
     /**
      * Calcula la posición donde debe insertarse la HierarchicalCup.
-     * La copa se inserta DESPUÉS de todas las copas más grandes que ella
-     * (que van al fondo), y ANTES de las más pequeñas (que desplaza hacia arriba).
-     * En el array items, índice 0 = fondo de la torre.
+     * 
      */
     private int displaceSmaller(Cup newCup) {
         int insertAfter = -1; 
@@ -749,7 +747,7 @@ public class Tower {
 
         for (Object obj : items) {
             if (!(obj instanceof Cup) && !(obj instanceof Lid)) continue;
-            // CrazyLid is drawn separately after the main loop
+            
             if (obj instanceof CrazyLid) continue;
 
             int hCm = (obj instanceof Cup) ? ((Cup) obj).getHeight()
