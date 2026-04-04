@@ -10,8 +10,16 @@ public class CrazyLid extends Lid {
 
     public CrazyLid(int number) {
         super(number);
-        
         this.color = "pink";
+    }
+
+    /**
+     * Siempre retorna "pink" sin importar el número.
+     * Garantiza que el color sea rosado desde la construcción.
+     */
+    @Override
+    protected String generateColor(int number) {
+        return "pink";
     }
 
     /**
@@ -43,12 +51,29 @@ public class CrazyLid extends Lid {
     }
 
     /**
-     * Override de makeVisible para CrazyLid.
-     * Se dibuja de forma especial en la base.
+     * Dibuja la CrazyLid en la base de la torre con coordenadas exactas.
+     *
+     * @param x    Posición X en píxeles
+     * @param y    Posición Y en píxeles (borde superior del rectángulo)
+     * @param wPx  Ancho en píxeles
+     * @param hPx  Alto en píxeles
+     */
+    public void drawAtBase(int x, int y, int wPx, int hPx) {
+        rect.makeInvisible();
+        rect.changeColor(color);
+        rect.changeSize(hPx, wPx);
+        rect.moveHorizontal(x - rectX);
+        rect.moveVertical(y - rectY);
+        rectX = x;
+        rectY = y;
+        rect.makeVisible();
+    }
+
+    /**
+     * Para que no se asocie a la copa.
      */
     @Override
     public void makeVisible() {
-        
         drawStandalone();
     }
 }

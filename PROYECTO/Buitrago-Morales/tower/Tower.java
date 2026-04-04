@@ -310,10 +310,13 @@ public class Tower {
             showError("Lid #" + i + " (" + lid.getType() + ") cannot enter");
             return;
         }
-        Cup matchingCup = findCup(i);
-        if (matchingCup != null && !matchingCup.hasLid()) {
-            matchingCup.setLid(lid);
-            lid.attachTo(matchingCup);
+        // CrazyLid goes to the base and does NOT cover any cup
+        if (!(lid instanceof CrazyLid)) {
+            Cup matchingCup = findCup(i);
+            if (matchingCup != null && !matchingCup.hasLid()) {
+                matchingCup.setLid(lid);
+                lid.attachTo(matchingCup);
+            }
         }
         
         if (lid instanceof CrazyLid) {
@@ -746,6 +749,8 @@ public class Tower {
 
         for (Object obj : items) {
             if (!(obj instanceof Cup) && !(obj instanceof Lid)) continue;
+            // CrazyLid is drawn separately after the main loop
+            if (obj instanceof CrazyLid) continue;
 
             int hCm = (obj instanceof Cup) ? ((Cup) obj).getHeight()
                                            : ((Lid) obj).getHeight();
@@ -789,9 +794,25 @@ public class Tower {
         for (Lid lid : associatedLidsToDrawLater) {
             lid.makeVisible();
         }
+        
         for (Object item : items) {
-            if (item instanceof CrazyLid && !((Lid) item).isOnCup()) {
-                ((Lid) item).makeVisible();
+            if (item instanceof CrazyLid) {
+                CrazyLid cl = (CrazyLid) item;
+                Cup matchingCup = null;
+                for (Object o : items) {
+                    if (o instanceof Cup && ((Cup) o).getNumber() == cl.getNumber()) {
+                        matchingCup = (Cup) o;
+                        break;
+                    }
+                }
+                if (matchingCup != null && matchingCup.getLastW() > 0) {
+                    int wallPx = WALL_CM * scale;
+                    int wPx = matchingCup.getLastW() - 2 * wallPx;
+                    int hPx = Math.max(3, scale / 2);
+                    int xPos = matchingCup.getLastX() + wallPx;
+                    int yPos = matchingCup.getLastY() + matchingCup.getLastH() - hPx;
+                    cl.drawAtBase(xPos, yPos, wPx, hPx);
+                }
             }
         }
     }
