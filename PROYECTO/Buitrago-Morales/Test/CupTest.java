@@ -6,7 +6,7 @@ import tower.Cup;
 import tower.NormalCup;
 
 /**
- * Clase de pruebas unitarias para la clase Cup.
+ * Clase de las pruebas unitarias para la clase Cup.
  *
  * @author Julian Morales - Sergio Buitrago
  */
