@@ -1,30 +1,29 @@
-package Test;
+package clases.test;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import tower.Cup;
 import tower.NormalCup;
 
 /**
- * Clase de las pruebas unitarias para la clase Cup.
+ * Clase de pruebas unitarias para la clase Cup.
  *
  * @author Julian Morales - Sergio Buitrago
  */
 public class CupTest {
 
-    // Helper: crea una NormalCup (Cup es abstracta)
     private Cup cup(int n) {
         return new NormalCup(n);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void constructor_shouldRejectNonPositiveNumber_zero() {
-        new NormalCup(0);
+        assertThrows(IllegalArgumentException.class, () -> new NormalCup(0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void constructor_shouldRejectNonPositiveNumber_negative() {
-        new NormalCup(-3);
+        assertThrows(IllegalArgumentException.class, () -> new NormalCup(-3));
     }
 
     @Test
@@ -32,9 +31,9 @@ public class CupTest {
         for (int n = 1; n <= 8; n++) {
             Cup c = cup(n);
             int expectedH = 2 * n - 1;
-            assertEquals("Altura incorrecta para n=" + n, expectedH, c.getHeight());
-            assertEquals("getHeightCm inconsistente para n=" + n, expectedH, c.getHeightCm());
-            assertTrue("Altura debe ser impar para n=" + n, (c.getHeight() % 2) == 1);
+            assertEquals(expectedH, c.getHeight(),        "Altura incorrecta para n=" + n);
+            assertEquals(expectedH, c.getHeightCm(),      "getHeightCm inconsistente para n=" + n);
+            assertTrue((c.getHeight() % 2) == 1,          "Altura debe ser impar para n=" + n);
         }
     }
 
@@ -57,7 +56,7 @@ public class CupTest {
         String[] expected = {"red", "blue", "green", "yellow", "magenta", "black"};
         for (int n = 1; n <= 12; n++) {
             String exp = expected[(n - 1) % expected.length];
-            assertEquals("Color inesperado para n=" + n, exp, cup(n).getColor());
+            assertEquals(exp, cup(n).getColor(), "Color inesperado para n=" + n);
         }
     }
 
@@ -70,11 +69,11 @@ public class CupTest {
 
     @Test
     public void toString_shouldContainNumberHeight_andNoLidByDefault() {
-        Cup c = cup(2); // H = 3
+        Cup c = cup(2);
         String s = c.toString();
-        assertTrue("toString debe incluir el número", s.contains("2"));
-        assertTrue("toString debe incluir la altura", s.contains("3"));
-        assertTrue("Estado por defecto: sin tapa", s.contains("sin tapa"));
+        assertTrue(s.contains("2"),        "toString debe incluir el número");
+        assertTrue(s.contains("3"),        "toString debe incluir la altura");
+        assertTrue(s.contains("sin tapa"), "Estado por defecto: sin tapa");
     }
 
     @Test
