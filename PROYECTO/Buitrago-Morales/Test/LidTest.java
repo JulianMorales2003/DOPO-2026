@@ -1,7 +1,7 @@
-package Test;
+package clases.test;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import tower.Lid;
 import tower.NormalLid;
 
@@ -12,7 +12,6 @@ import tower.NormalLid;
  */
 public class LidTest {
 
-    // Helper: crea una NormalLid (Lid es abstracta)
     private Lid lid(int n) {
         return new NormalLid(n);
     }
@@ -56,12 +55,12 @@ public class LidTest {
         Lid l = lid(1);
         String color = l.getColor();
         assertNotNull(color);
-        assertTrue("Color debe ser no vacío", color.trim().length() > 0);
+        assertTrue(color.trim().length() > 0, "Color debe ser no vacío");
     }
 
     @Test
     public void toString_shouldContainNumber() {
         Lid l = lid(9);
-        assertTrue("toString debe contener el número", l.toString().contains("9"));
+        assertTrue(l.toString().contains("9"), "toString debe contener el número");
     }
 }
