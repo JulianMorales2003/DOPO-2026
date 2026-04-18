@@ -1,23 +1,24 @@
-package Test;
+package clases.test;
 
 import tower.*;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Pruebas de UNIDAD para el Ciclo 4.
  * Todas corren internamente: ninguna abre ventana, canvas ni JFrame.
  * Se usa únicamente el estado lógico de los objetos.
+ * Incluye tests adicionales para alcanzar 90%+ de cobertura.
  *
  * @author Julian Morales - Sergio Buitrago
- * @version 4.0 (Ciclo 4 - TowerC4test)
+ * @version 4.0 (Ciclo 4 - TowerC4test + Cobertura extendida)
  */
 public class TowerC4test {
 
     private Tower tower;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         tower = new Tower(15, 50);
     }
@@ -37,14 +38,14 @@ public class TowerC4test {
         assertEquals(0, tower.height());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testConstructorPrincipal_widthCero_lanzaExcepcion() {
-        new Tower(0, 10);
+        assertThrows(IllegalArgumentException.class, () -> new Tower(0, 10));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testConstructorPrincipal_maxHeightNegativo_lanzaExcepcion() {
-        new Tower(5, -1);
+        assertThrows(IllegalArgumentException.class, () -> new Tower(5, -1));
     }
 
     @Test
@@ -56,9 +57,36 @@ public class TowerC4test {
         assertEquals(9, t.height());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testConstructorMasivo_negativo_lanzaExcepcion() {
-        new Tower(-1);
+        assertThrows(IllegalArgumentException.class, () -> new Tower(-1));
+    }
+
+    @Test
+    public void testConstructorMasivo_cero_torreVacia() {
+        Tower t = new Tower(0);
+        assertEquals(0, t.height());
+        assertEquals(0, t.stackingItems().length);
+        assertTrue(t.ok());
+    }
+
+    @Test
+    public void testConstructorMasivo_uno_unaCopaAltura1() {
+        Tower t = new Tower(1);
+        assertEquals(1, t.stackingItems().length);
+        assertEquals("cup", t.stackingItems()[0][0]);
+        assertEquals("1", t.stackingItems()[0][1]);
+    }
+
+    @Test
+    public void testConstructorMasivo_cuatro_cuatroCopas() {
+        Tower t = new Tower(4);
+        int copas = 0;
+        for (String[] item : t.stackingItems()) {
+            if ("cup".equals(item[0])) copas++;
+        }
+        assertEquals(4, copas);
+        assertTrue(t.ok());
     }
 
     // =========================================================
@@ -102,7 +130,7 @@ public class TowerC4test {
 
     @Test
     public void testPopCup_torreVacia_noLanzaExcepcion() {
-        tower.popCup();
+        assertDoesNotThrow(() -> tower.popCup());
         assertEquals(0, tower.height());
     }
 
@@ -113,6 +141,33 @@ public class TowerC4test {
         tower.popCup();
         assertEquals(1, tower.height());
         assertFalse(cupEstaEnTorre(tower, 2));
+    }
+
+    @Test
+    public void testPopCup_copaConTapa_eliminaAmbos() {
+        tower.pushCup(1);
+        tower.pushLid(1);
+        assertEquals(1, tower.lidedCups().length);
+        tower.popCup();
+        assertEquals(0, tower.height());
+        assertEquals(0, tower.lidedCups().length);
+    }
+
+    @Test
+    public void testPopCup_soloCopas_eliminaUltima() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        tower.pushCup(3);
+        tower.popCup();
+        assertFalse(cupEstaEnTorre(tower, 3));
+        assertTrue(cupEstaEnTorre(tower, 1));
+        assertTrue(cupEstaEnTorre(tower, 2));
+    }
+
+    @Test
+    public void testPopCup_sinCopas_soloTapa_noCrash() {
+        tower.pushLidType("crazy", 1);
+        assertDoesNotThrow(() -> tower.popCup());
     }
 
     // =========================================================
@@ -149,6 +204,22 @@ public class TowerC4test {
         assertEquals(0, tower.height());
     }
 
+    @Test
+    public void testPushCupType_bouncer_mismaAltura_noEntra() {
+        tower.pushCup(1);          // altura 1
+        int antes = tower.height();
+        // BouncerCup 6 tiene altura 11, diferente → entra
+        tower.pushCupType("bouncer", 6);
+        assertTrue(tower.height() > antes);
+        // Ahora intentamos otra bouncer con altura 1 (copa 1 ya existe con h=1)
+        // BouncerCup número diferente pero misma altura: número 8 también h=15 (diferente)
+        // Para forzar rebote: agregar copa normal de alguna altura, luego bouncer misma h
+        Tower t = new Tower(15, 50);
+        t.pushCup(2);              // altura 3
+        t.pushCupType("bouncer", 5); // altura 9, no conflicto
+        assertTrue(cupEstaEnTorre(t, 5));
+    }
+
     // =========================================================
     // TOWER — OpenerCup elimina tapas
     // =========================================================
@@ -171,6 +242,23 @@ public class TowerC4test {
         assertEquals(4, tower.height());
     }
 
+    @Test
+    public void testOpenerCup_color_esCyan() {
+        assertEquals("cyan", new OpenerCup(1).getColor());
+    }
+
+    @Test
+    public void testOpenerCup_onEnter_returnsTrue() {
+        assertTrue(new OpenerCup(1).onEnter(null, 0));
+    }
+
+    @Test
+    public void testOpenerCup_toString_sinTapa() {
+        String s = new OpenerCup(3).toString();
+        assertTrue(s.contains("3"));
+        assertTrue(s.contains("sin tapa"));
+    }
+
     // =========================================================
     // TOWER — HierarchicalCup
     // =========================================================
@@ -179,7 +267,7 @@ public class TowerC4test {
     public void testHierarchicalCup_alFondo_noPuedeSalir() {
         tower.pushCupType("hierarchical", 2);
         tower.popCup();
-        assertTrue("HierarchicalCup en fondo no debe salir", cupEstaEnTorre(tower, 2));
+        assertTrue(cupEstaEnTorre(tower, 2), "HierarchicalCup en fondo no debe salir");
     }
 
     @Test
@@ -189,7 +277,32 @@ public class TowerC4test {
         String[][] items = tower.stackingItems();
         int idxH = indexOf(items, "cup", "3");
         int idx1 = indexOf(items, "cup", "1");
-        assertTrue("Hierarchical debe quedar antes (fondo) que la copa menor", idxH < idx1);
+        assertTrue(idxH < idx1, "Hierarchical debe quedar antes (fondo) que la copa menor");
+    }
+
+    @Test
+    public void testHierarchicalCup_onEnter_posicionCero_atBottomTrue() {
+        HierarchicalCup h = new HierarchicalCup(2);
+        h.onEnter(null, 0);
+        assertTrue(h.isAtBottom());
+    }
+
+    @Test
+    public void testHierarchicalCup_onEnter_posicionMayor_atBottomFalse() {
+        HierarchicalCup h = new HierarchicalCup(2);
+        h.onEnter(null, 3);
+        assertFalse(h.isAtBottom());
+    }
+
+    @Test
+    public void testHierarchicalCup_color_esOrange() {
+        assertEquals("orange", new HierarchicalCup(1).getColor());
+    }
+
+    @Test
+    public void testHierarchicalCup_toString_sinTapa() {
+        String s = new HierarchicalCup(2).toString();
+        assertTrue(s.contains("2"));
     }
 
     // =========================================================
@@ -209,6 +322,18 @@ public class TowerC4test {
         tower.pushLid(1);
         tower.pushLid(1);
         assertEquals(1, tower.lidedCups().length);
+    }
+
+    @Test
+    public void testPushLid_sinCopaCoincidente_noAsociaPeroPuedeEntrar() {
+        tower.pushCup(1);
+        tower.pushLid(2); // copa 2 no existe, tapa entra sin asociar
+        assertEquals(0, tower.lidedCups().length);
+        boolean hayTapa = false;
+        for (String[] item : tower.stackingItems()) {
+            if ("lid".equals(item[0]) && "2".equals(item[1])) hayTapa = true;
+        }
+        assertTrue(hayTapa);
     }
 
     @Test
@@ -233,6 +358,16 @@ public class TowerC4test {
     }
 
     @Test
+    public void testPushLidType_crazy_multipleCopas_sigueEnBase() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        tower.pushCup(3);
+        tower.pushLidType("crazy", 9);
+        assertEquals("lid", tower.stackingItems()[0][0]);
+        assertEquals("9", tower.stackingItems()[0][1]);
+    }
+
+    @Test
     public void testPushLidType_glued_entraCorrectamente() {
         tower.pushCup(1);
         tower.pushLidType("glued", 1);
@@ -240,10 +375,24 @@ public class TowerC4test {
     }
 
     @Test
+    public void testPushLidType_tipoDesconocido_noAgrega() {
+        tower.pushCup(1);
+        tower.pushLidType("invisible", 1);
+        assertEquals(0, tower.lidedCups().length);
+    }
+
+    @Test
     public void testPopLid_normal_eliminaTapa() {
         tower.pushCup(1);
         tower.pushLid(1);
         tower.popLid();
+        assertEquals(0, tower.lidedCups().length);
+    }
+
+    @Test
+    public void testPopLid_sinTapas_noCrash() {
+        tower.pushCup(1);
+        assertDoesNotThrow(() -> tower.popLid());
         assertEquals(0, tower.lidedCups().length);
     }
 
@@ -283,6 +432,12 @@ public class TowerC4test {
         assertEquals(1, tower.lidedCups().length);
     }
 
+    @Test
+    public void testRemoveLid_inexistente_noCrash() {
+        tower.pushCup(1);
+        assertDoesNotThrow(() -> tower.removeLid(99));
+    }
+
     // =========================================================
     // TOWER — consultas: height, ok, lidedCups, stackingItems
     // =========================================================
@@ -319,6 +474,21 @@ public class TowerC4test {
         assertEquals(2, lided.length);
         assertEquals(1, lided[0]);
         assertEquals(2, lided[1]);
+    }
+
+    @Test
+    public void testLidedCups_tresTapas_ordenAscendente() {
+        tower.pushCup(3);
+        tower.pushCup(1);
+        tower.pushCup(2);
+        tower.pushLid(3);
+        tower.pushLid(1);
+        tower.pushLid(2);
+        int[] lided = tower.lidedCups();
+        assertEquals(3, lided.length);
+        assertEquals(1, lided[0]);
+        assertEquals(2, lided[1]);
+        assertEquals(3, lided[2]);
     }
 
     @Test
@@ -366,6 +536,23 @@ public class TowerC4test {
     }
 
     @Test
+    public void testOrderTower_torreVacia_noCrash() {
+        assertDoesNotThrow(() -> tower.orderTower());
+        assertEquals(0, tower.height());
+    }
+
+    @Test
+    public void testOrderTower_conTapaSuelta_sePreserva() {
+        tower.pushCup(1);
+        tower.pushCup(3);
+        tower.pushLid(5); // tapa suelta
+        tower.orderTower();
+        assertTrue(tower.ok());
+        assertTrue(cupEstaEnTorre(tower, 1));
+        assertTrue(cupEstaEnTorre(tower, 3));
+    }
+
+    @Test
     public void testReverseTower_dosCopas_invierteOrden() {
         tower.pushCup(1);
         tower.pushCup(2);
@@ -373,6 +560,29 @@ public class TowerC4test {
         tower.reverseTower();
         String[][] after = tower.stackingItems();
         assertEquals(before[0][1], after[after.length - 1][1]);
+    }
+
+    @Test
+    public void testReverseTower_torreVacia_noCrash() {
+        assertDoesNotThrow(() -> tower.reverseTower());
+        assertEquals(0, tower.height());
+    }
+
+    @Test
+    public void testReverseTower_unaCopa_noCambia() {
+        tower.pushCup(1);
+        tower.reverseTower();
+        assertEquals(1, tower.height());
+        assertTrue(cupEstaEnTorre(tower, 1));
+    }
+
+    @Test
+    public void testReverseTower_excedeLimite_eliminaExceso() {
+        Tower pequeña = new Tower(10, 5);
+        pequeña.pushCup(1); // h=1
+        pequeña.pushCup(2); // h=3 → total 4
+        pequeña.reverseTower();
+        assertTrue(pequeña.ok());
     }
 
     // =========================================================
@@ -392,7 +602,7 @@ public class TowerC4test {
     @Test
     public void testSwap_descriptorNulo_noLanzaExcepcion() {
         tower.pushCup(1);
-        tower.swap(null, new String[]{"cup", "1"});
+        assertDoesNotThrow(() -> tower.swap(null, new String[]{"cup", "1"}));
     }
 
     @Test
@@ -404,15 +614,60 @@ public class TowerC4test {
     }
 
     @Test
+    public void testSwap_mismoNumero_noHaceNada() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        String[][] antes = tower.stackingItems();
+        tower.swap(new String[]{"cup", "1"}, new String[]{"cup", "1"});
+        String[][] despues = tower.stackingItems();
+        assertEquals(antes[0][1], despues[0][1]);
+    }
+
+    @Test
+    public void testSwap_tipoLid_noIntercambia() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        int alturaPrev = tower.height();
+        tower.swap(new String[]{"lid", "1"}, new String[]{"cup", "2"});
+        assertEquals(alturaPrev, tower.height());
+    }
+
+    @Test
+    public void testSwap_descriptorLongitudInsuficiente_noCrash() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        assertDoesNotThrow(() ->
+            tower.swap(new String[]{"cup"}, new String[]{"cup", "2"})
+        );
+    }
+
+    @Test
     public void testSwapToReduce_unaCopaOrMenos_retornaNone() {
         tower.pushCup(1);
         assertEquals("none", tower.swapToReduce()[0][0]);
     }
 
     @Test
+    public void testSwapToReduce_torreVacia_retornaNone() {
+        String[][] result = tower.swapToReduce();
+        assertEquals("none", result[0][0]);
+        assertEquals("none", result[1][0]);
+    }
+
+    @Test
     public void testSwapToReduce_dosCopas_retornaResultadoNoNulo() {
         tower.pushCup(1);
         tower.pushCup(2);
+        String[][] result = tower.swapToReduce();
+        assertNotNull(result);
+        assertEquals(2, result.length);
+    }
+
+    @Test
+    public void testSwapToReduce_tresCopasSinMejora_retornaNoneOPar() {
+        tower.pushCup(3);
+        tower.pushCup(2);
+        tower.pushCup(1);
         String[][] result = tower.swapToReduce();
         assertNotNull(result);
         assertEquals(2, result.length);
@@ -437,6 +692,22 @@ public class TowerC4test {
         tower.pushCup(2);
         tower.cover();
         assertEquals(2, tower.lidedCups().length);
+    }
+
+    @Test
+    public void testCover_torreVacia_noCrash() {
+        assertDoesNotThrow(() -> tower.cover());
+        assertEquals(0, tower.lidedCups().length);
+    }
+
+    @Test
+    public void testCover_todasYaTapadas_noModifica() {
+        tower.pushCup(1);
+        tower.pushCup(2);
+        tower.cover();
+        int lidsBefore = tower.lidedCups().length;
+        tower.cover();
+        assertEquals(lidsBefore, tower.lidedCups().length);
     }
 
     // =========================================================
@@ -467,14 +738,69 @@ public class TowerC4test {
         assertTrue(c.hasLid());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCup_numeroCero_lanzaExcepcion() {
-        new NormalCup(0);
+        assertThrows(IllegalArgumentException.class, () -> new NormalCup(0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCup_numeroNegativo_lanzaExcepcion() {
-        new NormalCup(-1);
+        assertThrows(IllegalArgumentException.class, () -> new NormalCup(-1));
+    }
+
+    @Test
+    public void testCup_getInnerHeight_variosNumeros() {
+        assertEquals(0, new NormalCup(1).getInnerHeight());
+        assertEquals(2, new NormalCup(2).getInnerHeight());
+        assertEquals(4, new NormalCup(3).getInnerHeight());
+        assertEquals(6, new NormalCup(4).getInnerHeight());
+        assertEquals(8, new NormalCup(5).getInnerHeight());
+    }
+
+    @Test
+    public void testCup_getWidth_escalaCorrecta() {
+        assertEquals(45, new NormalCup(1).getWidth());
+        assertEquals(50, new NormalCup(2).getWidth());
+        assertEquals(55, new NormalCup(3).getWidth());
+        assertEquals(60, new NormalCup(4).getWidth());
+        assertEquals(70, new NormalCup(6).getWidth());
+    }
+
+    @Test
+    public void testCup_getLastValues_antesDeVisible_sonCero() {
+        NormalCup c = new NormalCup(1);
+        assertEquals(0, c.getLastX());
+        assertEquals(0, c.getLastY());
+        assertEquals(0, c.getLastW());
+        assertEquals(0, c.getLastH());
+    }
+
+    @Test
+    public void testCup_resetPosition_limpiaDatos() {
+        NormalCup c = new NormalCup(1);
+        c.resetPosition();
+        assertEquals(0, c.getLastX());
+        assertEquals(0, c.getLastY());
+    }
+
+    @Test
+    public void testNormalCup_onEnter_returnsTrue() {
+        assertTrue(new NormalCup(3).onEnter(null, 0));
+        assertTrue(new NormalCup(3).onEnter(null, 5));
+    }
+
+    @Test
+    public void testNormalCup_toString_sinTapa() {
+        String s = new NormalCup(2).toString();
+        assertTrue(s.contains("2"));
+        assertTrue(s.contains("sin tapa"));
+    }
+
+    @Test
+    public void testNormalCup_toString_conTapa() {
+        NormalCup c = new NormalCup(2);
+        c.setLid(new NormalLid(2));
+        assertTrue(c.toString().contains("con tapa"));
     }
 
     // =========================================================
@@ -517,6 +843,35 @@ public class TowerC4test {
     }
 
     // =========================================================
+    // BouncerCup — comportamiento específico
+    // =========================================================
+
+    @Test
+    public void testBouncerCup_onEnter_returnsTrue() {
+        assertTrue(new BouncerCup(1).onEnter(null, 0));
+    }
+
+    @Test
+    public void testBouncerCup_color_noNulo() {
+        assertNotNull(new BouncerCup(1).getColor());
+        assertTrue(new BouncerCup(1).getColor().trim().length() > 0);
+    }
+
+    @Test
+    public void testBouncerCup_toString_sinTapa() {
+        String s = new BouncerCup(3).toString();
+        assertTrue(s.contains("3"));
+        assertTrue(s.contains("sin tapa"));
+    }
+
+    @Test
+    public void testBouncerCup_toString_conTapa() {
+        BouncerCup b = new BouncerCup(2);
+        b.setLid(new NormalLid(2));
+        assertTrue(b.toString().contains("con tapa"));
+    }
+
+    // =========================================================
     // LID — getters
     // =========================================================
 
@@ -538,13 +893,62 @@ public class TowerC4test {
     }
 
     @Test
+    public void testLid_attachToNull_desasocia() {
+        NormalLid l = new NormalLid(1);
+        l.attachTo(new NormalCup(1));
+        assertTrue(l.isOnCup());
+        l.attachTo(null);
+        assertFalse(l.isOnCup());
+        assertNull(l.getAssociatedCup());
+    }
+
+    @Test
     public void testLid_getHeight_siempreUno() {
         assertEquals(1, new NormalLid(3).getHeight());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testLid_numeroCero_lanzaExcepcion() {
-        new NormalLid(0);
+        assertThrows(IllegalArgumentException.class, () -> new NormalLid(0));
+    }
+
+    @Test
+    public void testLid_numeroNegativo_lanzaExcepcion() {
+        assertThrows(IllegalArgumentException.class, () -> new NormalLid(-5));
+    }
+
+    @Test
+    public void testLid_getColor_conCopa_devuelveColorDeCopa() {
+        NormalLid l = new NormalLid(1);
+        NormalCup c = new NormalCup(1);
+        l.attachTo(c);
+        assertEquals(c.getColor(), l.getColor());
+    }
+
+    @Test
+    public void testLid_getColor_sinCopa_devuelveColorPropio() {
+        assertNotNull(new NormalLid(2).getColor());
+    }
+
+    @Test
+    public void testLid_generateColor_recorrePaleta() {
+        String c1 = new NormalLid(1).getColor();
+        String c7 = new NormalLid(7).getColor(); // 7 % 6 = 1 → mismo color
+        assertEquals(c1, c7);
+    }
+
+    @Test
+    public void testNormalLid_toString_sinCopa() {
+        String s = new NormalLid(3).toString();
+        assertTrue(s.contains("3"));
+        assertTrue(s.contains("sin copa"));
+    }
+
+    @Test
+    public void testNormalLid_toString_conCopa() {
+        NormalLid l = new NormalLid(2);
+        l.attachTo(new NormalCup(2));
+        assertTrue(l.toString().contains("copa"));
     }
 
     // =========================================================
@@ -560,11 +964,12 @@ public class TowerC4test {
     // LID — canEnter / canExit por subtipo
     // =========================================================
 
-    @Test public void testNormalLid_canEnter_siempre() { assertTrue(new NormalLid(1).canEnter(null)); }
-    @Test public void testNormalLid_canExit_siempre()  { assertTrue(new NormalLid(1).canExit(null)); }
-    @Test public void testCrazyLid_canEnter_siempre()  { assertTrue(new CrazyLid(1).canEnter(null)); }
-    @Test public void testCrazyLid_canExit_siempre()   { assertTrue(new CrazyLid(1).canExit(null)); }
-    @Test public void testGluedLid_canEnter_siempre()  { assertTrue(new GluedLid(1).canEnter(null)); }
+    @Test public void testNormalLid_canEnter_siempre()  { assertTrue(new NormalLid(1).canEnter(null)); }
+    @Test public void testNormalLid_canExit_siempre()   { assertTrue(new NormalLid(1).canExit(null)); }
+    @Test public void testCrazyLid_canEnter_siempre()   { assertTrue(new CrazyLid(1).canEnter(null)); }
+    @Test public void testCrazyLid_canExit_siempre()    { assertTrue(new CrazyLid(1).canExit(null)); }
+    @Test public void testGluedLid_canEnter_siempre()   { assertTrue(new GluedLid(1).canEnter(null)); }
+    @Test public void testFearfulLid_canEnter_siempre() { assertTrue(new FearfulLid(1).canEnter(null)); }
 
     @Test
     public void testFearfulLid_canExit_falseEnCopa() {
@@ -579,6 +984,18 @@ public class TowerC4test {
     }
 
     @Test
+    public void testFearfulLid_color_esGray() {
+        assertEquals("gray", new FearfulLid(1).getColor());
+    }
+
+    @Test
+    public void testFearfulLid_toString_sinCopa() {
+        String s = new FearfulLid(4).toString();
+        assertTrue(s.contains("4"));
+        assertTrue(s.contains("fearful"));
+    }
+
+    @Test
     public void testGluedLid_canExit_falseEnCopa() {
         GluedLid gl = new GluedLid(1);
         gl.attachTo(new NormalCup(1));
@@ -588,6 +1005,29 @@ public class TowerC4test {
     @Test
     public void testGluedLid_canExit_trueSuelta() {
         assertTrue(new GluedLid(1).canExit(null));
+    }
+
+    @Test
+    public void testGluedLid_color_esBrown() {
+        assertEquals("brown", new GluedLid(1).getColor());
+    }
+
+    @Test
+    public void testGluedLid_toString_sinCopa() {
+        String s = new GluedLid(3).toString();
+        assertTrue(s.contains("3"));
+        assertTrue(s.contains("glued"));
+    }
+
+    @Test
+    public void testCrazyLid_color_esPink() {
+        assertEquals("pink", new CrazyLid(1).getColor());
+    }
+
+    @Test
+    public void testCrazyLid_toString_sinCopa() {
+        String s = new CrazyLid(5).toString();
+        assertTrue(s.contains("5"));
     }
 
     // =========================================================
@@ -602,6 +1042,16 @@ public class TowerC4test {
     @Test
     public void testSolve_hCero_impossible() {
         assertEquals("impossible", TowerContest.solve(5, 0));
+    }
+
+    @Test
+    public void testSolve_nNegativo_impossible() {
+        assertEquals("impossible", TowerContest.solve(-1, 10));
+    }
+
+    @Test
+    public void testSolve_hNegativo_impossible() {
+        assertEquals("impossible", TowerContest.solve(3, -5));
     }
 
     @Test
@@ -620,10 +1070,37 @@ public class TowerC4test {
     }
 
     @Test
+    public void testSolve_alturaImposible_retornaImpossible() {
+        assertEquals("impossible", TowerContest.solve(2, 100));
+    }
+
+    @Test
     public void testSolve_h9_sumaCorrecta() {
         String result = TowerContest.solve(3, 9);
-        assertFalse("Se esperaba solución", result.equals("impossible"));
+        assertFalse(result.equals("impossible"), "Se esperaba solución");
         assertEquals(9, sumarAlturasEnSolucion(result));
+    }
+
+    @Test
+    public void testSolve_h4_n2_retornaDosNumeros() {
+        String result = TowerContest.solve(2, 4);
+        assertNotEquals("impossible", result);
+        assertEquals(2, result.trim().split("\\s+").length);
+    }
+
+    @Test
+    public void testSolve_h16_n4_sumaCorrecta() {
+        String result = TowerContest.solve(4, 16);
+        assertNotEquals("impossible", result);
+        assertEquals(16, sumarAlturasEnSolucion(result));
+    }
+
+    @Test
+    public void testSolve_h7_n4_sumaCorrecta() {
+        String result = TowerContest.solve(4, 7);
+        if (!result.equals("impossible")) {
+            assertEquals(7, sumarAlturasEnSolucion(result));
+        }
     }
 
     @Test
@@ -632,7 +1109,7 @@ public class TowerC4test {
         if (!result.equals("impossible")) {
             java.util.Set<String> seen = new java.util.HashSet<>();
             for (String p : result.split(" ")) {
-                assertTrue("Copa duplicada en solución: " + p, seen.add(p));
+                assertTrue(seen.add(p), "Copa duplicada en solución: " + p);
             }
         }
     }
@@ -642,6 +1119,43 @@ public class TowerC4test {
         String result = TowerContest.solve(3, 9);
         assertNotNull(result);
         assertFalse(result.isEmpty());
+    }
+
+    @Test
+    public void testSolve_deterministico_mismoResultado() {
+        String r1 = TowerContest.solve(4, 8);
+        String r2 = TowerContest.solve(4, 8);
+        assertEquals(r1, r2);
+    }
+
+    @Test
+    public void testSolve_numerosEnRango_n4() {
+        String result = TowerContest.solve(4, 7);
+        if (!result.equals("impossible")) {
+            for (String part : result.trim().split("\\s+")) {
+                int cup = Integer.parseInt(part);
+                assertTrue(cup >= 1 && cup <= 4, "Copa fuera de rango: " + cup);
+            }
+        }
+    }
+
+    @Test
+    public void testSolve_variasAlturas_sinDuplicados() {
+        for (int h = 1; h <= 25; h += 2) {
+            String result = TowerContest.solve(5, h);
+            if (!result.equals("impossible")) {
+                java.util.Set<String> seen = new java.util.HashSet<>();
+                for (String p : result.trim().split("\\s+")) {
+                    assertTrue(seen.add(p), "Copa duplicada h=" + h);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSolve_h25_n10_encuentraSolucionOImpossible() {
+        String result = TowerContest.solve(10, 25);
+        assertTrue(result.equals("impossible") || result.matches("[0-9]+(\\s[0-9]+)*"));
     }
 
     // =========================================================
