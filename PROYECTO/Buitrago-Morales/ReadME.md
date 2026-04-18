@@ -26,3 +26,15 @@ De 172 métodos totales, 74 no tienen ninguna prueba (43%).
 De 22 clases totales, 9 no están cubiertas (41%).
 La cobertura de ramas al 50% indica que muchos condicionales (if/else, switch) no están siendo ejercitados por los tests.
 
+Decisiones para mejorar la cobertura:
+
+1. Aumentar cobertura de ramas en tower y shapes
+Con solo 50% de ramas, hay muchos if/else sin probar. Necesitamos tests para los caminos alternativos: valores límite, casos nulos, condiciones negativas.
+2. Cubrir los 74 métodos sin ninguna prueba
+43% de métodos nunca son llamados por los tests. Identificaremos cuáles son y añadiremos al menos un test por método.
+3. Nuevos tests enfocados en:
+
+Constructores con parámetros inválidos adicionales
+Métodos de las clases shapes
+Interacciones entre copa y tapa no cubiertas
+Casos borde en TowerContest.solve
