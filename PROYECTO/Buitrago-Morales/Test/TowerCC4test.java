@@ -1,9 +1,9 @@
-package Test;
+package clases.test;
 
 import tower.*;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Pruebas de CASOS COMUNES para el Ciclo 4 (TowerCC4test).
@@ -17,14 +17,10 @@ public class TowerCC4test {
 
     private Tower tower;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         tower = new Tower(15, 100);
     }
-
-    // =========================================================
-    // CC1 — Estado inicial de la torre
-    // =========================================================
 
     @Test
     public void cc1_torreRecienCreada_estadoInicialCorrecto() {
@@ -34,10 +30,6 @@ public class TowerCC4test {
         assertTrue(tower.ok());
     }
 
-    // =========================================================
-    // CC2 — Copas normales en secuencia
-    // =========================================================
-
     @Test
     public void cc2_tresCopasNormales_alturaEsNueve() {
         tower.pushCup(1);
@@ -46,10 +38,6 @@ public class TowerCC4test {
         assertEquals(9, tower.height());
         assertEquals(3, tower.stackingItems().length);
     }
-
-    // =========================================================
-    // CC3 — push y pop restauran estado
-    // =========================================================
 
     @Test
     public void cc3_pushYpopCopa_restauraEstadoPrevio() {
@@ -61,10 +49,6 @@ public class TowerCC4test {
         assertTrue(cupEstaEnTorre(tower, 1));
     }
 
-    // =========================================================
-    // CC4 — Tapa normal se asocia a copa del mismo número
-    // =========================================================
-
     @Test
     public void cc4_tapaNormalMismoNumero_quedaAsociadaACopa() {
         tower.pushCup(2);
@@ -74,20 +58,12 @@ public class TowerCC4test {
         assertEquals(2, lided[0]);
     }
 
-    // =========================================================
-    // CC5 — FearfulLid rechazada sin copa compañera
-    // =========================================================
-
     @Test
     public void cc5_fearfulLidSinCopaCompanera_noEntraAlaTorre() {
         tower.pushCup(1);
         tower.pushLidType("fearful", 3);
         assertEquals(0, tower.lidedCups().length);
     }
-
-    // =========================================================
-    // CC6 — FearfulLid no puede salir si está sobre su copa
-    // =========================================================
 
     @Test
     public void cc6_fearfulLidSobreSuCopa_noSaleConPopLid() {
@@ -96,10 +72,6 @@ public class TowerCC4test {
         tower.popLid();
         assertEquals(1, tower.lidedCups().length);
     }
-
-    // =========================================================
-    // CC7 — CrazyLid se inserta en la base
-    // =========================================================
 
     @Test
     public void cc7_crazyLid_siempreOcupaLaBase() {
@@ -110,10 +82,6 @@ public class TowerCC4test {
         assertEquals("lid", items[0][0]);
     }
 
-    // =========================================================
-    // CC8 — GluedLid no puede salir una vez pegada
-    // =========================================================
-
     @Test
     public void cc8_gluedLidPegada_noSaleConPopNiConRemove() {
         tower.pushCup(1);
@@ -123,10 +91,6 @@ public class TowerCC4test {
         tower.removeLid(1);
         assertEquals(1, tower.lidedCups().length);
     }
-
-    // =========================================================
-    // CC9 — OpenerCup elimina todas las tapas al entrar
-    // =========================================================
 
     @Test
     public void cc9_openerCup_eliminaTodasLasTapasExistentes() {
@@ -139,21 +103,13 @@ public class TowerCC4test {
         assertEquals(0, tower.lidedCups().length);
     }
 
-    // =========================================================
-    // CC10 — HierarchicalCup en el fondo no puede retirarse
-    // =========================================================
-
     @Test
     public void cc10_hierarchicalCupEnFondo_noPuedeSalirConPop() {
         tower.pushCup(1);
         tower.pushCupType("hierarchical", 3);
         tower.popCup();
-        assertTrue("HierarchicalCup no debió salir del fondo", cupEstaEnTorre(tower, 3));
+        assertTrue(cupEstaEnTorre(tower, 3), "HierarchicalCup no debió salir del fondo");
     }
-
-    // =========================================================
-    // CC11 — orderTower ordena de mayor a menor
-    // =========================================================
 
     @Test
     public void cc11_orderTower_colocaMayoresAlFondo() {
@@ -165,13 +121,9 @@ public class TowerCC4test {
         int idx1 = indexOf(items, "cup", "1");
         int idx2 = indexOf(items, "cup", "2");
         int idx3 = indexOf(items, "cup", "3");
-        assertTrue("Copa 3 debe estar antes que copa 2", idx3 < idx2);
-        assertTrue("Copa 2 debe estar antes que copa 1", idx2 < idx1);
+        assertTrue(idx3 < idx2, "Copa 3 debe estar antes que copa 2");
+        assertTrue(idx2 < idx1, "Copa 2 debe estar antes que copa 1");
     }
-
-    // =========================================================
-    // CC12 — reverseTower invierte el orden
-    // =========================================================
 
     @Test
     public void cc12_reverseTower_invierteOrdenDeLasCopas() {
@@ -183,10 +135,6 @@ public class TowerCC4test {
         assertEquals("3", items[0][1]);
     }
 
-    // =========================================================
-    // CC13 — swap intercambia posiciones
-    // =========================================================
-
     @Test
     public void cc13_swap_intercambiaDosCopasCorrectamente() {
         tower.pushCup(1);
@@ -195,12 +143,8 @@ public class TowerCC4test {
         String[][] items = tower.stackingItems();
         int idx1 = indexOf(items, "cup", "1");
         int idx2 = indexOf(items, "cup", "2");
-        assertTrue("Copa 2 debe quedar antes que copa 1 tras el swap", idx2 < idx1);
+        assertTrue(idx2 < idx1, "Copa 2 debe quedar antes que copa 1 tras el swap");
     }
-
-    // =========================================================
-    // CC14 — cover tapa todas las copas sin tapa
-    // =========================================================
 
     @Test
     public void cc14_cover_tapaTodaLasCopasQueNoTienenTapa() {
@@ -220,10 +164,6 @@ public class TowerCC4test {
         assertEquals(2, tower.lidedCups().length);
     }
 
-    // =========================================================
-    // CC15 — swapToReduce retorna par o "none"
-    // =========================================================
-
     @Test
     public void cc15_swapToReduce_unaCopaDevuelveNone() {
         tower.pushCup(1);
@@ -242,10 +182,6 @@ public class TowerCC4test {
         assertNotNull(result[1][0]);
     }
 
-    // =========================================================
-    // CC16 — TowerContest.solve (solo lógica, sin simulate)
-    // =========================================================
-
     @Test
     public void cc16_solve_casosBasicos_correctos() {
         assertEquals("1",          TowerContest.solve(1, 1));
@@ -260,10 +196,6 @@ public class TowerCC4test {
         assertEquals(9, sumarAlturasEnSolucion(result));
     }
 
-    // =========================================================
-    // CC17 — OpenerCup elimina FearfulLid
-    // =========================================================
-
     @Test
     public void cc17_openerCup_eliminaTambienFearfulLid() {
         tower.pushCup(1);
@@ -273,23 +205,15 @@ public class TowerCC4test {
         assertEquals(0, tower.lidedCups().length);
     }
 
-    // =========================================================
-    // CC18 — HierarchicalCup permanece en fondo después de orderTower
-    // =========================================================
-
     @Test
     public void cc18_hierarchicalCupDespuesDeOrder_sigueAtrapada() {
         tower.pushCupType("hierarchical", 2);
         tower.pushCup(1);
         tower.orderTower();
         tower.popCup();
-        assertTrue("HierarchicalCup debe seguir en la torre tras orderTower",
-                   cupEstaEnTorre(tower, 2));
+        assertTrue(cupEstaEnTorre(tower, 2),
+                "HierarchicalCup debe seguir en la torre tras orderTower");
     }
-
-    // =========================================================
-    // CC19 — BouncerCup entra si no hay copa con su misma altura
-    // =========================================================
 
     @Test
     public void cc19_bouncerCup_sinDuplicadoDeAltura_entra() {
@@ -297,10 +221,6 @@ public class TowerCC4test {
         assertEquals(3, tower.height());
         assertTrue(cupEstaEnTorre(tower, 2));
     }
-
-    // =========================================================
-    // CC20 — Secuencia completa mantiene ok()
-    // =========================================================
 
     @Test
     public void cc20_secuenciaCompletaDeOperaciones_siempreOk() {
@@ -315,34 +235,23 @@ public class TowerCC4test {
         assertTrue(tower.height() <= 100);
     }
 
-    // =========================================================
-    // CC21 — stackingItems refleja el orden real de la torre
-    // =========================================================
-
-    
     @Test
-    
     public void cc21_stackingItems_reflejaOrdenRealDeLaTorre() {
         tower.pushCup(1);
         tower.pushCup(2);
         tower.pushLid(2);
         String[][] items = tower.stackingItems();
         assertEquals(3, items.length);
-        // Verificar que existen los elementos correctos sin asumir orden exacto
         boolean hasCup1 = false, hasCup2 = false, hasLid2 = false;
         for (String[] item : items) {
             if ("cup".equals(item[0]) && "1".equals(item[1])) hasCup1 = true;
             if ("cup".equals(item[0]) && "2".equals(item[1])) hasCup2 = true;
             if ("lid".equals(item[0]) && "2".equals(item[1])) hasLid2 = true;
         }
-        assertTrue("Debe contener copa 1", hasCup1);
-        assertTrue("Debe contener copa 2", hasCup2);
-        assertTrue("Debe contener tapa 2", hasLid2);
+        assertTrue(hasCup1, "Debe contener copa 1");
+        assertTrue(hasCup2, "Debe contener copa 2");
+        assertTrue(hasLid2, "Debe contener tapa 2");
     }
-
-    // =========================================================
-    // CC22 — Altura no cambia tras intento de operación inválida
-    // =========================================================
 
     @Test
     public void cc22_operacionInvalida_alturaNoSeModifica() {
@@ -352,10 +261,6 @@ public class TowerCC4test {
         tower.pushLidType("fearful", 9);
         assertEquals(alturaAntes, tower.height());
     }
-
-    // =========================================================
-    // UTILIDADES PRIVADAS
-    // =========================================================
 
     private boolean cupEstaEnTorre(Tower t, int numero) {
         for (String[] item : t.stackingItems())
