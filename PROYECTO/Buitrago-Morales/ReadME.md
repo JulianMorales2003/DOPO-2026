@@ -1,4 +1,4 @@
-# 📊 analisis-DOPO — Reporte de Cobertura de Tests
+# 📊 PROYECTO-DOPO — Reporte de Cobertura de Tests
 
 > 👥 Autores: Julian & Sergio Buitrago  
 > 🛠️ Herramientas: **JaCoCo 0.8.11** · **JUnit 5** · **Maven**
