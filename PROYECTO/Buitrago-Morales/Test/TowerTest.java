@@ -1,7 +1,7 @@
-package clases.test;
+package Test;
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
+import org.junit.Test;
 import tower.Tower;
 
 /**
@@ -12,14 +12,14 @@ import tower.Tower;
  */
 public class TowerTest {
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void constructor_shouldRejectNonPositiveWidth() {
-        assertThrows(IllegalArgumentException.class, () -> new Tower(0, 20));
+        new Tower(0, 20);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void constructor_shouldRejectNonPositiveMaxHeight() {
-        assertThrows(IllegalArgumentException.class, () -> new Tower(20, 0));
+        new Tower(20, 0);
     }
 
     @Test
@@ -128,9 +128,9 @@ public class TowerTest {
         assertEquals(0, t.stackingItems().length);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void constructorCups_negativeCups_shouldThrow() {
-        assertThrows(IllegalArgumentException.class, () -> new Tower(-1));
+        new Tower(-1);
     }
 
     @Test
@@ -197,8 +197,8 @@ public class TowerTest {
         Tower t = new Tower(100, 50);
         t.pushCup(3);
         t.pushCup(2);
-        assertDoesNotThrow(() -> t.swap(null, new String[]{"cup", "2"}));
-        assertDoesNotThrow(() -> t.swap(new String[]{"cup", "3"}, null));
+        t.swap(null, new String[]{"cup", "2"});
+        t.swap(new String[]{"cup", "3"}, null);
     }
 
     @Test
