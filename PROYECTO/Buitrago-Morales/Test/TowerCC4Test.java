@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Julian Morales - Sergio Buitrago
  * @version 4.0 (Ciclo 4 - TowerCC4test)
  */
-public class TowerCC4test {
+public class TowerCC4Test {
 
     private Tower tower;
 
