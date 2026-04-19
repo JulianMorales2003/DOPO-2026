@@ -1,7 +1,7 @@
-package clases.test;
+package Test;
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
+import org.junit.Test;
 import tower.TowerContest;
 
 /**
@@ -71,7 +71,7 @@ public class TowerContestTest {
         if (!result.equals("impossible")) {
             for (String part : result.trim().split("\\s+")) {
                 int cup = Integer.parseInt(part);
-                assertTrue(cup >= 1 && cup <= n, "Cup number out of range: " + cup);
+                assertTrue("Cup number out of range: " + cup, cup >= 1 && cup <= n);
             }
         }
     }
@@ -83,7 +83,7 @@ public class TowerContestTest {
         if (!result.equals("impossible")) {
             java.util.Set<String> seen = new java.util.HashSet<>();
             for (String part : result.trim().split("\\s+")) {
-                assertTrue(seen.add(part), "Duplicate cup found: " + part);
+                assertTrue("Duplicate cup found: " + part, seen.add(part));
             }
         }
     }
@@ -112,7 +112,7 @@ public class TowerContestTest {
             for (String p : result.trim().split("\\s+")) {
                 total += 2 * Integer.parseInt(p) - 1;
             }
-            assertEquals(h, total, "Sum of cup heights must equal target");
+            assertEquals("Sum of cup heights must equal target", h, total);
         }
     }
 
