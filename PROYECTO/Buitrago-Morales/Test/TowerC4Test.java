@@ -1,4 +1,4 @@
-package clases.test;
+package test;
 
 import tower.*;
 import org.junit.jupiter.api.BeforeEach;
