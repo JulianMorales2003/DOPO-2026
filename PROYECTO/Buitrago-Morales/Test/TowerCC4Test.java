@@ -3,8 +3,8 @@ package Test;
 import tower.*;
 import shapes.*;
 import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Pruebas de CASOS COMUNES para el Ciclo 4 (TowerCC4test).
