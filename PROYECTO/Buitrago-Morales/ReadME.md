@@ -19,7 +19,6 @@
 - La cobertura general del **57%** estaba por debajo del estándar recomendado del 80%.
 - El paquete `tower`, siendo el núcleo del sistema, tenía 185 instrucciones sin cubrir y **6 clases completamente sin tests**.
 - El paquete `shapes` presentaba una situación similar con el 56% de cobertura y 2 clases sin ninguna prueba.
-- `org.example` tenía **0% de cobertura** — ninguno de sus métodos era ejercitado por los tests.
 - De 172 métodos totales, **74 (43%) no tenían ninguna prueba asociada**.
 - La cobertura de ramas al 50% indicaba que la mayoría de los condicionales del sistema no estaban siendo ejercitados.
 
